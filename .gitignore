@@ -1,0 +1,23 @@
+# Secrets — never commit credentials
+.env
+*.env
+keys/
+*-key.json
+*credentials*.json
+service-account*.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+logs/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
