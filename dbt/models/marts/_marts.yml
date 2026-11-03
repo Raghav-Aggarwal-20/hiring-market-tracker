@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: dim_company
+    description: One row per tracked company with its ATS, peer group and first tracked date.
+    columns:
+      - name: company_slug
+        data_tests: [unique, not_null]
+
+  - name: dim_posting
+    description: >
+      One row per posting ever seen. Attributes come from the posting's latest sighting; lifecycle columns say
+      when it was first and last seen and whether it has closed.
+    columns:
+      - name: posting_key
+        data_tests: [unique, not_null]
+      - name: company_slug
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_company')
+                field: company_slug
+      - name: reported_age_days
+        description: Days since the ATS publish date, as of the last sighting (or the close date). Reposts reset it.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 3650
+              config:
+                severity: warn
+      - name: salary_midpoint_usd
+        description: Midpoint of the posted range, only when `is_pay_usable` (USD, annual, $20K-$2M, not sales).
+      - name: is_open
+        data_tests: [not_null]

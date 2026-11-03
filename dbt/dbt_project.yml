@@ -16,6 +16,8 @@ models:
       +materialized: view
     intermediate:
       +materialized: view
+    marts:
+      +materialized: table
 
 seeds:
   hiring_market_tracker:
