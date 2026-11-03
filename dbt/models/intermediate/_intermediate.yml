@@ -13,3 +13,46 @@ models:
           - accepted_values:
               arguments:
                 values: [greenhouse, ashby]
+
+  - name: int_postings__classified
+    description: Unioned postings plus business-rule labels (function, data role, workplace, US, seniority, pay usability).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [posting_key, snapshot_date]
+    columns:
+      - name: job_function
+        description: Data-role rule first, then the first matching title rule in `function_rules`, then department, else `other`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [data_analytics, people_hr, sales, product_design, customer, marketing, engineering, g_and_a, other]
+      - name: data_role_family
+        description: Data role family from title role phrases. `business_analyst` is tracked but not counted as a data role.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [analytics_engineering, data_science, data_engineering, bi, data_analyst, business_analyst, analytics_general]
+      - name: workplace_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [remote, hybrid, onsite, unknown]
+      - name: is_us
+        description: True if any listed location is in the US; NULL when the location names no place ("Remote", "Hybrid").
+      - name: seniority
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [intern, entry, senior, staff_plus, director, executive, unspecified]
+      - name: pay_basis
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [annual, ote, hourly, monthly]
+      - name: is_pay_usable
+        description: USD, annual, $20K-$2M, min <= max, and not a sales role. Only these rows feed salary metrics.
+        data_tests: [not_null]

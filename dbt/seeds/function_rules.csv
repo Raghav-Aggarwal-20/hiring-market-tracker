@@ -1,0 +1,8 @@
+priority,job_function,pattern
+10,people_hr,\brecruit|\btalent|\bhr\b|\bhrbp\b|human resources|\bpeople\b|compensation|benefits|payroll|workplace|total rewards|learning (and|&) development|employee
+20,sales,account executive|account manager|account director|\bsales\b|\bsdr\b|\bbdr\b|business development|partner|alliance|channel|solutions? (engineer|architect|consultant)|customer engineer|pre-?sales|\bgo-to-market\b|\bgtm\b|deal desk|outcomes architect|enterprise representative|account representative
+25,product_design,product manag|product lead|product owner|product management|program manag|\btpm\b|design|\bux\b|user research
+30,customer,customer|support|implementation|onboarding|professional services|consultant|technical account manager|trust (&|and) safety
+40,marketing,marketing|\bbrand\b|communications|\bcomms\b|\bpr\b|content|developer relations|developer advocate|devrel|\bevents?\b|social media|copywriter|community
+60,engineering,engineer|developer|software|\bsre\b|devops|architect|scientist|research|technical staff|machine learning|infrastructure|security|technician|\bqa\b|\bai\b|platform|r&d|\bsw eng
+70,g_and_a,financ|accountant|accounting|controller|\btax\b|treasury|fp&a|audit|legal|counsel|attorney|paralegal|compliance|policy|procurement|sourcing|real estate|facilities|assistant|chief of staff|strategy|operations|\bit\b|information technology|risk
