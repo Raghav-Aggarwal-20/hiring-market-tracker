@@ -58,11 +58,18 @@ first_days as (
 
 ),
 
+companies as (
+
+    select company_slug, is_active from {{ ref('companies') }}
+
+),
+
 joined as (
 
     select
         d.snapshot_date,
         d.company_slug,
+        coalesce(co.is_active, false) as is_active,
         d.is_successful,
         d.snapshot_date = f.first_tracked_date as is_baseline_day,
         if(d.is_successful, coalesce(o.open_postings, 0), null) as open_postings,
@@ -75,6 +82,7 @@ joined as (
         end as new_postings,
         if(d.is_successful, coalesce(c.closed_postings, 0), null) as closed_postings
     from company_days as d
+    left join companies as co using (company_slug)
     left join first_days as f using (company_slug)
     left join open_counts as o using (company_slug, snapshot_date)
     left join new_counts as n using (company_slug, snapshot_date)

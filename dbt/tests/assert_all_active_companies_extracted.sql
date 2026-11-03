@@ -1,27 +1,11 @@
--- Fails when an active company has no successful extract on the latest snapshot day
--- (dead board token, ATS migration, API outage). Returns one row per missing company.
+-- Fails when an active company's extract did not succeed on the latest snapshot day
+-- (dead board token, ATS migration, API outage). Returns one row per affected company.
+-- Reads only fct_company_daily, which has no downstream models: a failure fails the job and alerts,
+-- but dbt build doesn't skip the dashboard tables, so the other companies still refresh.
+-- The extractor logs a run row for every active company, so a missing company shows up as unsuccessful.
 
-with latest_day as (
-
-    select max(snapshot_date) as snapshot_date
-    from {{ ref('int_company_extract_days') }}
-
-),
-
-latest_status as (
-
-    select d.company_slug, d.is_successful
-    from {{ ref('int_company_extract_days') }} as d
-    inner join latest_day using (snapshot_date)
-
-)
-
-select
-    c.company_slug,
-    c.ats,
-    (select snapshot_date from latest_day) as snapshot_date,
-    coalesce(s.is_successful, false) as is_successful
-from {{ ref('companies') }} as c
-left join latest_status as s using (company_slug)
-where c.is_active
-    and not coalesce(s.is_successful, false)
+select company_slug, snapshot_date, is_successful
+from {{ ref('fct_company_daily') }}
+where is_active
+    and not is_successful
+    and snapshot_date = (select max(snapshot_date) from {{ ref('fct_company_daily') }})
