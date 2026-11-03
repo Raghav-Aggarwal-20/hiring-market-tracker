@@ -59,3 +59,33 @@ models:
     columns:
       - name: posting_key
         data_tests: [unique, not_null]
+
+  - name: rpt_postings_current
+    description: fct_postings_current plus readable labels and a 4-group peer lens. Dashboard source for pages 1-2.
+    columns:
+      - name: posting_key
+        data_tests: [unique, not_null]
+      - name: workplace_label
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Remote, Hybrid, Onsite, Not stated]
+
+  - name: rpt_company_summary
+    description: One row per active company with today's counts, function shares (0-1), exact median and p75 posting age, and median usable salary midpoint.
+    columns:
+      - name: company_slug
+        data_tests: [unique, not_null]
+
+  - name: rpt_company_daily
+    description: fct_company_daily with company names and peer lens. Dashboard source for the trends page.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [company_slug, snapshot_date]
+
+  - name: rpt_pipeline_health
+    description: One row per active company with its latest extract status and data-quality coverage shares.
+    columns:
+      - name: company_slug
+        data_tests: [unique, not_null]
