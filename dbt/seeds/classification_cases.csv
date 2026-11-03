@@ -1,0 +1,25 @@
+title,department_name,expected_job_function,expected_data_role_family,why
+Database Research Scientist,Core Engineering,engineering,,'database' is not 'data'
+"Frontend Engineer, Data Visualization",Engineering,engineering,,data is the product area not the role
+Staff Software Engineer - Data Platform,Engineering,engineering,,software engineer on a data platform
+Data Center Electrical Engineer,Compute,engineering,,data center is infrastructure
+"Engineering Manager, Tax Compliance",Engineering,engineering,,engineering must beat 'tax'
+"Analytics Engineer, HR Analytics",HR Systems & Analytics,data_analytics,analytics_engineering,the Elastic target role
+"Senior Data Scientist, Guest & Host",Data Science,data_analytics,data_science,
+Senior Data Engineer,All Departments,data_analytics,data_engineering,
+Business Intelligence Analyst,Finance,data_analytics,bi,
+"Staff Data Analyst, People Analytics",People,data_analytics,data_analyst,data beats the People department
+"Senior Analyst, Employee Lifecycle Data (Workday)",People,data_analytics,analytics_general,reversed word order
+People Analytics Intern,Internships,data_analytics,analytics_general,reversed word order
+Senior Financial Analyst,Finance,g_and_a,business_analyst,finance analyst is not a data role
+Derivative Sales Analyst,Institutional Sales,sales,,trading role
+"Product Manager, Internal Financial Data",Product,product_design,,PM on a data product
+Strategic Partnerships Lead / Director - AEO/GEO Analytics,Business Development,sales,,partnerships role
+"Senior Platform Product Manager, Trust and Safety",Product Management,product_design,,product must beat trust & safety
+"Senior Account Executive, SLED (NJ/PA)",Field Sales,sales,,
+"Senior Recruiter, Emerging Talent",People & Talent,people_hr,,
+Product Marketing Manager,Marketing,marketing,,product marketing is marketing
+Senior Commercial Counsel,Legal Operations,g_and_a,,
+"Technical Support Engineer 3, Premier",Support Engineering,customer,,support beats engineer
+Senior Strategic Program Lead,Customer Experience,customer,,decided by department
+Can't find a role for you? Submit a general application.,,other,,no rule applies
