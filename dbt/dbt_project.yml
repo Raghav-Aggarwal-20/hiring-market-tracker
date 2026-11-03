@@ -9,3 +9,14 @@ test-paths: ["tests"]
 macro-paths: ["macros"]
 
 clean-targets: ["target", "dbt_packages"]
+
+models:
+  hiring_market_tracker:
+    staging:
+      +materialized: view
+
+seeds:
+  hiring_market_tracker:
+    companies:
+      +column_types:
+        is_active: boolean

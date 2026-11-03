@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Untouched daily snapshots written by the Python extractor (extract/).
+    database: "{{ target.project }}"
+    schema: raw
+    config:
+      loaded_at_field: extracted_at
+      freshness:
+        warn_after: {count: 30, period: hour}
+        error_after: {count: 48, period: hour}
+    tables:
+      - name: job_postings
+        description: One row per open posting per company per snapshot day. The API response is kept as-is in `payload`.
+        columns:
+          - name: snapshot_date
+            description: UTC date of the pull; the table is partitioned on it.
+          - name: posting_id
+            description: The ATS's own posting id, as a string.
+          - name: payload
+            description: The posting JSON exactly as returned, minus description HTML.
+      - name: extract_runs
+        description: One row per company per extraction attempt, success or failure. Append-only.
+        columns:
+          - name: status
+            description: "`success` or `failed`."
