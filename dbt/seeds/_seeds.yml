@@ -1,0 +1,16 @@
+version: 2
+
+seeds:
+  - name: companies
+    description: Tracked companies and their ATS board tokens. Drives both the extractor and dim_company.
+    columns:
+      - name: company_slug
+        data_tests: [unique, not_null]
+      - name: ats
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [greenhouse, ashby]
+      - name: board_token
+        description: The name the ATS API uses for this company's board (can differ from company_slug).
+        data_tests: [not_null]

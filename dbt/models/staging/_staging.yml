@@ -1,0 +1,74 @@
+version: 2
+
+models:
+  - name: stg_greenhouse__postings
+    description: One row per Greenhouse posting per snapshot day, typed and renamed from the raw JSON.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [posting_key, snapshot_date]
+    columns:
+      - name: posting_key
+        description: "`ats|company_slug|posting_id`; unique per posting across both ATS."
+        data_tests: [not_null]
+      - name: snapshot_date
+        data_tests: [not_null]
+      - name: company_slug
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('companies')
+                field: company_slug
+      - name: title
+        data_tests: [not_null]
+      - name: published_at
+        description: Greenhouse `first_published`. A repost resets it.
+        data_tests: [not_null]
+      - name: workplace_type_raw
+        description: Raw value from a company-specific custom field (Airbnb, Anthropic, MongoDB); null for other companies.
+      - name: req_open_date
+        description: Elastic-only custom field; when the requisition opened.
+
+  - name: stg_ashby__postings
+    description: One row per Ashby posting per snapshot day, typed and renamed from the raw JSON.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [posting_key, snapshot_date]
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "salary_min <= salary_max"
+    columns:
+      - name: posting_key
+        description: "`ats|company_slug|posting_id`; unique per posting across both ATS."
+        data_tests: [not_null]
+      - name: snapshot_date
+        data_tests: [not_null]
+      - name: company_slug
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('companies')
+                field: company_slug
+      - name: title
+        data_tests: [not_null]
+      - name: published_at
+        description: Ashby `publishedAt`.
+        data_tests: [not_null]
+      - name: workplace_type_raw
+        description: Ashby `workplaceType`; null when the company didn't set it.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Hybrid, Remote, OnSite]
+      - name: employment_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [FullTime, PartTime, Intern, Contract, Temporary]
+              config:
+                severity: warn
+      - name: salary_min
+        description: Base salary range from Ashby's Salary component, in `salary_currency` per `salary_interval`.
