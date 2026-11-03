@@ -21,3 +21,11 @@ omni,Omni Analytics,ashby,omni,analytics,true
 sentry,Sentry,ashby,sentry,dev_tools,true
 ashby,Ashby,ashby,ashby,hr_tech,true
 oyster,Oyster HR,ashby,oyster,hr_tech,true
+cloudflare,Cloudflare,greenhouse,cloudflare,dev_tools,true
+okta,Okta,greenhouse,okta,security,true
+gitlab,GitLab,greenhouse,gitlab,dev_tools,true
+coinbase,Coinbase,greenhouse,coinbase,fintech,true
+pagerduty,PagerDuty,greenhouse,pagerduty,observability,true
+ramp,Ramp,ashby,ramp,fintech,true
+notion,Notion,ashby,notion,productivity,true
+plaid,Plaid,ashby,plaid,fintech,true
