@@ -79,3 +79,14 @@ models:
                 severity: warn
       - name: salary_min
         description: Base salary range from Ashby's Salary component, in `salary_currency` per `salary_interval`.
+
+  - name: stg_extract_runs
+    description: One row per company per extraction attempt, success or failure.
+    columns:
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [success, failed]
+      - name: company_slug
+        data_tests: [not_null]

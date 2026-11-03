@@ -56,3 +56,60 @@ models:
       - name: is_pay_usable
         description: USD, annual, $20K-$2M, min <= max, and not a sales role. Only these rows feed salary metrics.
         data_tests: [not_null]
+
+  - name: int_company_extract_days
+    description: One row per company per snapshot day, from the latest extraction attempt for that day.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [company_slug, snapshot_date]
+
+  - name: int_posting_lifecycle
+    description: One row per posting ever seen. Closed only when the company had a later successful extract without it.
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "closed_date is null or closed_date > last_seen_date"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "days_seen <= date_diff(last_seen_date, first_seen_date, day) + 1"
+    columns:
+      - name: posting_key
+        data_tests: [unique, not_null]
+      - name: days_observed_open
+        description: Days from first sighting to close (or to the latest successful extract if still open). Left-censored for postings open before tracking began.
+
+unit_tests:
+  - name: closes_only_after_a_successful_extract
+    description: >
+      Company a succeeds every day; company b fails on day 2 (and never recovers); company c fails on day 2 and
+      recovers on day 3. A posting missing on a failed day must stay open; it closes on the next successful day.
+    model: int_posting_lifecycle
+    given:
+      - input: ref('int_postings__unioned')
+        rows:
+          - {posting_key: "a|1", company_slug: a, snapshot_date: "2026-11-01"}
+          - {posting_key: "a|1", company_slug: a, snapshot_date: "2026-11-02"}
+          - {posting_key: "a|1", company_slug: a, snapshot_date: "2026-11-03"}
+          - {posting_key: "a|2", company_slug: a, snapshot_date: "2026-11-01"}
+          - {posting_key: "b|3", company_slug: b, snapshot_date: "2026-11-01"}
+          - {posting_key: "c|4", company_slug: c, snapshot_date: "2026-11-01"}
+          - {posting_key: "c|4", company_slug: c, snapshot_date: "2026-11-03"}
+          - {posting_key: "c|5", company_slug: c, snapshot_date: "2026-11-01"}
+      - input: ref('int_company_extract_days')
+        rows:
+          - {company_slug: a, snapshot_date: "2026-11-01", is_successful: true}
+          - {company_slug: a, snapshot_date: "2026-11-02", is_successful: true}
+          - {company_slug: a, snapshot_date: "2026-11-03", is_successful: true}
+          - {company_slug: b, snapshot_date: "2026-11-01", is_successful: true}
+          - {company_slug: b, snapshot_date: "2026-11-02", is_successful: false}
+          - {company_slug: c, snapshot_date: "2026-11-01", is_successful: true}
+          - {company_slug: c, snapshot_date: "2026-11-02", is_successful: false}
+          - {company_slug: c, snapshot_date: "2026-11-03", is_successful: true}
+    expect:
+      rows:
+        - {posting_key: "a|1", is_open: true, closed_date: null, days_seen: 3, days_observed_open: 2}
+        - {posting_key: "a|2", is_open: false, closed_date: "2026-11-02", days_seen: 1, days_observed_open: 1}
+        - {posting_key: "b|3", is_open: true, closed_date: null, days_seen: 1, days_observed_open: 0}
+        - {posting_key: "c|4", is_open: true, closed_date: null, days_seen: 2, days_observed_open: 2}
+        - {posting_key: "c|5", is_open: false, closed_date: "2026-11-03", days_seen: 1, days_observed_open: 2}
