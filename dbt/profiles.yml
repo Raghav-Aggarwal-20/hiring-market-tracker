@@ -1,0 +1,14 @@
+# No secrets here: locally dbt uses your gcloud ADC login; in CI the auth action provides it.
+hiring_market_tracker:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID', 'hiring-market-tracker') }}"
+      dataset: analytics
+      location: US
+      threads: 4
+      job_execution_timeout_seconds: 300
+      # Per-query cost cap (1 GB) while the free trial blocks the daily quota.
+      maximum_bytes_billed: 1000000000

@@ -1,0 +1,11 @@
+name: hiring_market_tracker
+version: "1.0.0"
+config-version: 2
+profile: hiring_market_tracker
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets: ["target", "dbt_packages"]
