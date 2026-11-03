@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: int_postings__unioned
+    description: Greenhouse and Ashby postings in one shape, one row per posting per snapshot day. Unlisted Ashby postings removed.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [posting_key, snapshot_date]
+    columns:
+      - name: ats
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [greenhouse, ashby]

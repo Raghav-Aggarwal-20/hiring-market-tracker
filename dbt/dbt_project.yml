@@ -14,6 +14,8 @@ models:
   hiring_market_tracker:
     staging:
       +materialized: view
+    intermediate:
+      +materialized: view
 
 seeds:
   hiring_market_tracker:
