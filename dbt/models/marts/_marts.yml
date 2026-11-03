@@ -34,3 +34,28 @@ models:
         description: Midpoint of the posted range, only when `is_pay_usable` (USD, annual, $20K-$2M, not sales).
       - name: is_open
         data_tests: [not_null]
+
+  - name: fct_company_daily
+    description: >
+      One row per company per snapshot day. Counts are NULL on failed extract days; `new_postings` and `net_change`
+      are NULL on a company's first tracked day (the baseline).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [company_slug, snapshot_date]
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "open_data_roles <= open_postings and open_remote_postings <= open_postings"
+    columns:
+      - name: company_slug
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_company')
+                field: company_slug
+
+  - name: fct_postings_current
+    description: Open postings at active companies, as of each company's latest successful extract. Main dashboard table.
+    columns:
+      - name: posting_key
+        data_tests: [unique, not_null]
