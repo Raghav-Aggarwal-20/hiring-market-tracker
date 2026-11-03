@@ -117,3 +117,32 @@ Built before this hour: structured Greenhouse pay (`pay_transparency=true`, 2,18
    *Interviewer might ask:* "How did you test logic that needs a week of data on day one?" dbt unit tests: mocked inputs for the upstream models and an exact expected output, run in every `dbt build`.
 
 **Time checkpoint (plan: fall back if more than 1 hour behind at the end of Hour 4):** on track. Hours 1–4 took about 4 hours, including two additions beyond the v1 plan (Greenhouse pay and the regression test). No fallback needed: Ashby stays, and the dashboard keeps 4 charts.
+
+## Hour 5: Marts, monitoring tests and a deliberate break (2026-11-03)
+
+Four marts built as tables (`dim_company`, `dim_posting`, `fct_company_daily`, `fct_postings_current`); totals reconcile with raw (5,409 open postings, 120 data roles). `dbt build` passes 73/73.
+
+1. **Dimensions and facts, built as tables.**
+   *Built:* `dim_posting` (one row per posting ever seen: latest attributes plus lifecycle), `dim_company`, `fct_company_daily` (company × day: open, new, closed, net change), and `fct_postings_current` (today's open postings at active companies, the dashboard's main table).
+   *Why:* the marts are what BI reads. Materializing them as tables runs the regex classification once per build instead of on every dashboard click; staging and intermediate stay views because only dbt reads them.
+   *Interviewer might ask:* "Why are some models views and others tables?" Views where only the pipeline reads them and freshness matters more than speed; tables where people query them repeatedly.
+
+2. **Empty means unknown, not zero.**
+   *Built:* failed extract days keep their row in `fct_company_daily` with NULL counts; `new_postings` and `net_change` are NULL on a company's first tracked day instead of counting every posting as new.
+   *Why:* a zero on a failed day draws a fake collapse on a trend line, and a day-one "5,409 new postings" spike would dominate every chart.
+   *Interviewer might ask:* "How do you handle the first day of a snapshot-based metric?" Treat it as a baseline: report levels, leave flows (new, closed) undefined until there's a prior day to compare against.
+
+3. **Monitoring tests with deliberate severities.**
+   *Built:* extraction completeness (error), open count falling by more than half since the previous good day (warn, boards of 10+ only), and unclassified function share over 25% (warn).
+   *Why:* errors are for things that make numbers wrong (a company silently missing); warnings are for changes that might be real (a hiring freeze looks exactly like a broken API).
+   *Interviewer might ask:* "How do you monitor a pipeline beyond 'did it run'?" Test the data itself: is every expected source present, did any volume move abnormally, and is the classification coverage holding.
+
+4. **Break it on purpose.**
+   *Built:* in throwaway datasets, a real extract with one board token broken plus a simulated prior day with one company inflated. Result: the completeness test failed naming the company, its 8 postings stayed open, its daily row showed NULLs, the drop test warned on the inflated company, and its fake postings closed on the right day.
+   *Why:* a test that has never failed hasn't been shown to work. Running the failure end to end proves the alert and the downstream behavior together.
+   *Interviewer might ask:* "How do you know your data quality checks work?" Inject the failure they're meant to catch, in an isolated environment, and check both that the alert fires and that the outputs behave correctly.
+
+5. **The alert itself can break the product.**
+   *Found:* when the completeness test failed, `dbt build` skipped `dim_company` and `fct_postings_current`, because the test read the `companies` seed and dbt skips everything downstream of a failed test's inputs. One dead board would have frozen the dashboard for all 30 companies.
+   *Fixed:* the test now reads only `fct_company_daily`, which has no downstream models. Re-ran the same break: the build still fails (CI alerts), nothing is skipped, and the dashboard table refreshes with the healthy companies.
+   *Interviewer might ask:* "Tell me about a bug you found in your own pipeline." This one: where a test sits in the DAG decides what it blocks, so placing it was a design decision, not an afterthought.
