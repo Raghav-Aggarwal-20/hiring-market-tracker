@@ -1,0 +1,23 @@
+company_slug,company_name,ats,board_token,peer_group,is_active
+elastic,Elastic,greenhouse,elastic,target,true
+datadog,Datadog,greenhouse,datadog,observability,true
+mongodb,MongoDB,greenhouse,mongodb,data_infra,true
+grafanalabs,Grafana Labs,greenhouse,grafanalabs,observability,true
+anthropic,Anthropic,greenhouse,anthropic,ai,true
+airbnb,Airbnb,greenhouse,airbnb,consumer,true
+fivetran,Fivetran,greenhouse,fivetran,analytics,true
+sigmacomputing,Sigma Computing,greenhouse,sigmacomputing,analytics,true
+gusto,Gusto,greenhouse,gusto,hr_tech,true
+justworks,Justworks,greenhouse,justworks,hr_tech,true
+cultureamp,Culture Amp,greenhouse,cultureamp,hr_analytics,true
+greenhouse,Greenhouse,greenhouse,greenhouse,hr_tech,true
+checkr,Checkr,greenhouse,checkr,hr_tech,true
+lattice,Lattice,greenhouse,lattice,hr_analytics,true
+snowflake,Snowflake,ashby,snowflake,data_infra,true
+clickhouse,ClickHouse,ashby,clickhouse,data_infra,true
+amplitude,Amplitude,ashby,amplitude,analytics,true
+hex,Hex,ashby,hex,analytics,true
+omni,Omni Analytics,ashby,omni,analytics,true
+sentry,Sentry,ashby,sentry,dev_tools,true
+ashby,Ashby,ashby,ashby,hr_tech,true
+oyster,Oyster HR,ashby,oyster,hr_tech,true

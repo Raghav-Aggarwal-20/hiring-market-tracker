@@ -1,2 +1,4 @@
 dbt-core==1.12.6
 dbt-bigquery==1.12.1
+google-cloud-bigquery==3.47.0
+requests==2.34.2
