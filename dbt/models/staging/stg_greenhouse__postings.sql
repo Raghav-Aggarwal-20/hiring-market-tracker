@@ -39,6 +39,14 @@ renamed as (
             limit 1
         ) as req_open_date,
 
+        -- Pay: first range only (89% of postings with pay have exactly one). The label says whether it's base,
+        -- OTE or hourly; that interpretation happens downstream. Greenhouse sends cents.
+        safe_cast(json_value(payload, '$.pay_input_ranges[0].min_cents') as numeric) / 100 as salary_min,
+        safe_cast(json_value(payload, '$.pay_input_ranges[0].max_cents') as numeric) / 100 as salary_max,
+        json_value(payload, '$.pay_input_ranges[0].currency_type') as salary_currency,
+        json_value(payload, '$.pay_input_ranges[0].title') as salary_label,
+        array_length(json_query_array(payload, '$.pay_input_ranges')) as pay_range_count,
+
         timestamp(json_value(payload, '$.first_published')) as published_at,
         timestamp(json_value(payload, '$.updated_at')) as updated_at,
         json_value(payload, '$.absolute_url') as job_url

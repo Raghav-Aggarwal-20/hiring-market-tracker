@@ -7,6 +7,9 @@ models:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns: [posting_key, snapshot_date]
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "salary_min <= salary_max"
     columns:
       - name: posting_key
         description: "`ats|company_slug|posting_id`; unique per posting across both ATS."
@@ -29,6 +32,10 @@ models:
         description: Raw value from a company-specific custom field (Airbnb, Anthropic, MongoDB); null for other companies.
       - name: req_open_date
         description: Elastic-only custom field; when the requisition opened.
+      - name: salary_min
+        description: First pay range from Greenhouse `pay_input_ranges`, converted from cents. May be base, OTE or hourly; see `salary_label`.
+      - name: salary_label
+        description: The company's own text for the first pay range (e.g. "OTE range", "Hourly Rate:"). Used downstream to decide pay basis.
 
   - name: stg_ashby__postings
     description: One row per Ashby posting per snapshot day, typed and renamed from the raw JSON.

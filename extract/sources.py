@@ -39,7 +39,15 @@ def _get_jobs(url, params):
 
 def fetch_greenhouse(board_token):
     # content=true is the only way to get departments and offices; the description itself is dropped later.
-    return _get_jobs(f"https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs", {"content": "true"})
+    # pay_transparency=true adds structured pay_input_ranges; each range's HTML blurb is boilerplate, so it's dropped.
+    jobs = _get_jobs(
+        f"https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs",
+        {"content": "true", "pay_transparency": "true"},
+    )
+    for job in jobs:
+        for pay_range in job.get("pay_input_ranges") or []:
+            pay_range.pop("blurb", None)
+    return jobs
 
 
 def fetch_ashby(board_token):
