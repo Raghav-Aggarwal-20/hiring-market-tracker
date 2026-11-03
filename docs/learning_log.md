@@ -86,3 +86,34 @@ First full pull: 5,407 postings from 30/30 companies (19 Greenhouse, 11 Ashby) i
    *Built:* most tests fail the build; the Ashby `employment_type` accepted-values test only warns.
    *Why:* a new employment type from the vendor is something to review, not a reason to stop the whole daily load. Failures are reserved for things that make numbers wrong: duplicates, missing keys, orphaned companies, min salary above max.
    *Interviewer might ask:* "How do you decide whether a test should warn or error?" Error when the data would produce an incorrect metric; warn when it's a change worth knowing about that downstream logic can tolerate.
+
+## Hour 4: Intermediate layer, business rules and lifecycle (2026-11-03)
+
+Built before this hour: structured Greenhouse pay (`pay_transparency=true`, 2,186 postings) alongside Ashby's. Built this hour: union, classification, a 24-case regression test, and the posting lifecycle with a unit test. `dbt build` green.
+
+1. **Prototype rules against real data before writing SQL.**
+   *Built:* the data-role and job-function rules were tested in Python against all 5,409 real titles first. A naive "title contains data/analytics" rule matched 289 titles, mostly data centers, databases and "Software Engineer, Data Platform". Role phrases ("data *scientist*", "*X* analyst") plus a guarded fallback matched 120 real data roles. The function rules leave only 1.6% of postings as "other".
+   *Why:* classification errors are invisible in a chart. Reading actual matches and misses is the only way to know the precision.
+   *Interviewer might ask:* "How did you validate a rule-based classifier with no labeled data?" Reviewed matches and near-misses by hand, measured the unclassified share, then froze the tricky cases as a regression test.
+
+2. **Rules as data, tested like code.**
+   *Built:* job-function rules live in a seed (`function_rules.csv`: priority, function, regex). A macro compiles them into one `CASE` at build time. The same macros feed the model and a singular test that checks 24 known titles ("Database Research Scientist" is engineering, not a data role). Breaking one rule's priority made the test fail with exactly one case.
+   *Why:* analysts can edit a CSV row, and the test stops a fix for one title from silently breaking another.
+   *Interviewer might ask:* "How do you stop a classification change from quietly breaking earlier decisions?" Put the known edge cases in a regression test that runs the production logic, and require it to pass in every build.
+
+3. **Value checks beat labels for pay.**
+   *Built:* `is_pay_usable` keeps only USD, annual, $20K–$2M, min ≤ max, non-sales salaries (1,747 of 2,989 postings with pay). The labels missed $0.01 and $1 placeholders, hourly rates under an "OTE or base" label, a $179M typo, and sales roles reported as OTE under "Annual Salary".
+   *Why:* company-written labels are free text; numeric bounds catch what the text hides. Unusable rows are flagged, not deleted, so coverage itself is reportable.
+   *Interviewer might ask:* "How do you handle unreliable source fields in a metric?" Define an explicit eligibility flag with documented rules, report how many rows pass it, and compute the metric only on those rows.
+
+4. **Unknown is a real answer.**
+   *Built:* `workplace_type` uses the company's own field first, then location text, and returns `unknown` (37% of postings) rather than assuming onsite. `is_us` is NULL when a location names no place ("Remote"). Seniority skips "manager" because Account and Product Managers are individual contributors.
+   *Why:* a guessed value inflates or deflates a metric silently; an explicit unknown keeps the denominator honest.
+   *Interviewer might ask:* "What's the remote share if a third of postings don't say?" Remote divided by postings with a known workplace type, with the unknown share shown next to it.
+
+5. **Closures are inferred, so they need guarding and a unit test.**
+   *Built:* `int_posting_lifecycle` closes a posting on the first *successful* extract day for its company that doesn't include it, using the run log. A dbt unit test with 5 made-up postings across a failed run and a recovery verifies the exact output, before real history exists.
+   *Why:* job-board APIs don't report closures; absence is the signal, and a failed API call would otherwise look like mass closures.
+   *Interviewer might ask:* "How did you test logic that needs a week of data on day one?" dbt unit tests: mocked inputs for the upstream models and an exact expected output, run in every `dbt build`.
+
+**Time checkpoint (plan: fall back if more than 1 hour behind at the end of Hour 4):** on track. Hours 1–4 took about 4 hours, including two additions beyond the v1 plan (Greenhouse pay and the regression test). No fallback needed: Ashby stays, and the dashboard keeps 4 charts.
