@@ -57,3 +57,32 @@ First full pull: 5,407 postings from 30/30 companies (19 Greenhouse, 11 Ashby) i
    *Built:* both raw tables are partitioned by `snapshot_date` and clustered by `company_slug`.
    *Why:* nearly every query filters by date range and often by company, so BigQuery scans only the matching partitions and blocks. That keeps costs flat as history grows.
    *Interviewer might ask:* "What's the difference between partitioning and clustering?" Partitioning splits the table into separate per-day storage that a date filter can skip entirely; clustering sorts data within each partition so filters on the cluster column read fewer blocks.
+
+## Hour 3: dbt sources, seed and staging (2026-11-03)
+
+`dbt build` passes 24/24: 1 seed, 2 staging views, 21 tests. Staging today: 4,118 Greenhouse and 1,289 Ashby postings, no duplicates.
+
+1. **Sources with freshness checks.**
+   *Built:* `raw.job_postings` and `raw.extract_runs` declared as dbt sources; freshness warns after 30 hours and errors after 48, based on `extracted_at`.
+   *Why:* models reference `source('raw', ...)` instead of hard-coded table names, which gives dbt the lineage graph, and freshness turns a silently broken schedule into a failed check.
+   *Interviewer might ask:* "How would you know if the pipeline stopped running?" Source freshness fails when the newest load is older than the threshold, independent of whether any model errored.
+
+2. **Staging does only renaming, typing and parsing.**
+   *Built:* one staging view per ATS that pulls fields out of the JSON payload, casts timestamps and numbers, and normalizes names (`department_name`, `published_at`). Interpreting values ("On-Site" means onsite) is left to the intermediate layer.
+   *Why:* each layer has one job, so a bug is easy to locate. Staging stays a faithful, typed mirror of the source; business rules live in one place downstream. Views cost no storage and always reflect the latest raw data.
+   *Interviewer might ask:* "Where would you put the logic that decides if a job is remote, and why?" In intermediate: it combines several source fields and company-specific conventions, which is business logic, not source cleanup.
+
+3. **Profiling before modeling.**
+   *Built:* queried the raw JSON before writing each model. That found Greenhouse always has exactly one department, workplace type only exists in three companies' custom metadata (under three different names), Ashby's `isRemote` is also true for hybrid jobs, and each Ashby posting has at most one salary component.
+   *Why:* those facts decided the SQL (taking `departments[0]` is safe; `workplaceType` is trusted over `isRemote`). Without profiling, they'd be guesses that quietly produce wrong numbers.
+   *Interviewer might ask:* "How do you approach a source you've never seen?" Profile null rates, cardinalities and value distributions per field first, and write down the assumptions the model relies on as comments or tests.
+
+4. **Grain and keys: one row per posting per day.**
+   *Built:* `posting_key = ats|company_slug|posting_id`, tested as unique together with `snapshot_date` (dbt_utils `unique_combination_of_columns`), plus a `relationships` test from every model's `company_slug` to the seed.
+   *Why:* a posting legitimately appears once per day it's open, so `posting_key` alone isn't unique. The compound key states the real grain. Including the ATS in the key prevents two systems' numeric IDs from colliding after the union.
+   *Interviewer might ask:* "What's the grain of this table?" One row per posting per snapshot day, enforced by a uniqueness test on (`posting_key`, `snapshot_date`).
+
+5. **Test severity as a design choice.**
+   *Built:* most tests fail the build; the Ashby `employment_type` accepted-values test only warns.
+   *Why:* a new employment type from the vendor is something to review, not a reason to stop the whole daily load. Failures are reserved for things that make numbers wrong: duplicates, missing keys, orphaned companies, min salary above max.
+   *Interviewer might ask:* "How do you decide whether a test should warn or error?" Error when the data would produce an incorrect metric; warn when it's a change worth knowing about that downstream logic can tolerate.
