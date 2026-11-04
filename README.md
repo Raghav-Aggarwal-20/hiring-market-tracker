@@ -54,7 +54,7 @@ The job-board APIs only return what is open right now, so history comes from sto
 
 Classification is rule-based and lives in seeds and macros, so it can be reviewed and tested:
 
-- **Data role:** title phrases such as "data analyst" or "analytics engineer", split into seven families.
+- **Data role:** title phrases such as "data analyst" or "analytics engineer", split into six families. Business analyst titles are tagged but not counted. Full definitions: [`docs/metric_definitions.md`](docs/metric_definitions.md).
 - **Function:** prioritized regex rules in `function_rules.csv`, applied to the title first and then to the department. 1.7% of postings end up as "other".
 - **Workplace:** the ATS field if present, otherwise the location text, otherwise "not stated".
 - **Usable pay:** USD, annual, between $20K and $2M, min ≤ max, and not a sales on-target-earnings range.
