@@ -167,3 +167,24 @@ Four marts built as tables (`dim_company`, `dim_posting`, `fct_company_daily`, `
    *Built:* `.github/workflows/daily.yml` runs at 11:00 UTC: extract → `dbt source freshness` → `dbt build` → dashboard build, authenticated with a least-privilege service account key stored as a GitHub secret. Any failed step stops the run, so a broken run never publishes a dashboard.
    *Why:* the pipeline must run without me; the JD asks to "automate recurring recruiting reports."
    *Interviewer might ask:* "How would you harden this auth?" Replace the JSON key with Workload Identity Federation so GitHub gets short-lived tokens and no long-lived key exists (planned after week 1).
+
+## Hour 7: Documentation, extension design and release checks
+
+1. **A metric dictionary as the reference.**
+   *Built:* `docs/metric_definitions.md`: every dashboard number with its definition, source column and caveats (for example, remote share excludes postings that don't state a workplace).
+   *Why:* two people reading "remote share" should get the same number. Writing the denominator down is what makes the metric reusable.
+   *Interviewer might ask:* "How do you get one version of the truth across teams?" Define each metric once, in the warehouse, with a written definition that names its source column and its denominator.
+
+2. **Designing for data I can't access yet.**
+   *Found:* public Greenhouse postings carry `internal_job_id` (Harvest's `jobs.id`) on 99.8% of postings and `requisition_id` on 93%. *Built:* `docs/harvest_extension.md` and kept `internal_job_id` in staging.
+   *Why:* posting history can join to internal applications and Workday hires on an exact key, not fuzzy title matching.
+   *Interviewer might ask:* "How would you link Greenhouse and Workday?" On the requisition ID both systems share, validated by a match-rate test, with candidate email hashed and used only inside the warehouse.
+
+3. **Scheduled runs are not on time.**
+   *Found:* the 11:00 UTC cron started at 18:29 UTC. GitHub Actions delays scheduled runs under load. The run passed and overwrote that day's partition with fresher data, so every README number had to be recomputed.
+   *Why it matters:* a run delayed past midnight UTC would be saved under the next date and leave a gap. Freshness tests (warn at 30h, error at 48h) would catch it.
+   *Interviewer might ask:* "How do you know a scheduled job actually ran?" Don't trust the scheduler. Test the data: source freshness, plus a completeness test on the run log.
+
+4. **Pre-release checks before making a repo public.**
+   *Checked:* full git history for keys (`private_key`, API key patterns: 0 hits), tracked files for emails and secrets, and that `profiles.yml` holds no credentials (ADC locally, the auth action in CI).
+   *Interviewer might ask:* "What would you do if a key was committed?" Revoke it first, then rewrite history. Deleting the file in a new commit leaves the key in history.
