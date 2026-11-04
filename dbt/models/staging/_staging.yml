@@ -23,6 +23,10 @@ models:
               arguments:
                 to: ref('companies')
                 field: company_slug
+      - name: internal_job_id
+        description: Greenhouse's internal job (requisition) id, equal to Harvest `jobs.id`. Present on 99.8% of postings.
+      - name: requisition_id
+        description: The company's own requisition number, often shared with the HRIS. Present on 93% of postings.
       - name: title
         data_tests: [not_null]
       - name: published_at

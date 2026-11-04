@@ -10,11 +10,11 @@ I built it to practice the recruiting-analytics stack (GCP, BigQuery, dbt, ATS d
 
 ## What it shows (snapshot of 2026-11-04)
 
-- 5,406 open postings across 30 companies; 119 of them are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
-- Day two of tracking: 40 postings opened and 43 closed. Day one has no comparison and is treated as a baseline.
-- Median posting age is 49 days. Sigma Computing's median is 147 days.
-- Of the 3,420 postings that state a workplace, 39% are remote. 37% of postings don't state one at all; Elastic and Okta never do.
-- Elastic: 413 open postings, 54% engineering, 27% sales, 3 data roles.
+- 5,413 open postings across 30 companies; 119 of them are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
+- Day two of tracking: 107 postings opened and 103 closed. Day one has no comparison and is treated as a baseline.
+- Median posting age is 48 days. Sigma Computing's median is 147 days.
+- Of the 3,419 postings that state a workplace, 39% are remote. 37% of postings don't state one at all; Elastic and Okta never do.
+- Elastic: 424 open postings, 56% engineering, 26% sales, 3 data roles.
 
 ## Architecture
 

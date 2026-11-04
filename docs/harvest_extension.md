@@ -8,13 +8,13 @@ Every Greenhouse posting in `raw.job_postings` carries two IDs besides the post 
 
 | Job Board field | Harvest equivalent | Coverage today (Elastic, 2026-11-04) |
 |---|---|---|
-| `id` | `job_posts.id` | 413 / 413 |
-| `internal_job_id` | `jobs.id` (the requisition record that applications attach to) | 413 / 413 |
-| `requisition_id` | `jobs.requisition_id` (the company's own req number, often shared with the HRIS) | 413 / 413 |
+| `id` | `job_posts.id` | 424 / 424 |
+| `internal_job_id` | `jobs.id` (the requisition record that applications attach to) | 424 / 424 |
+| `requisition_id` | `jobs.requisition_id` (the company's own req number, often shared with the HRIS) | 424 / 424 |
 
-Across all 19 Greenhouse boards on the same day, `internal_job_id` is present on 4,108 of 4,118 postings (99.8%) and `requisition_id` on 3,831 (93%).
+Across all 19 Greenhouse boards on the same day, `internal_job_id` is present on 4,123 of 4,133 postings (99.8%) and `requisition_id` on 3,850 (93%).
 
-So the public posting history built here could be joined to internal applications without fuzzy matching: `job_board.internal_job_id = harvest.jobs.id`. `stg_greenhouse__postings` currently keeps `requisition_id`; adding `internal_job_id` is a one-line change, and it is already in the raw JSON.
+So the public posting history built here could be joined to internal applications without fuzzy matching: `job_board.internal_job_id = harvest.jobs.id`. `stg_greenhouse__postings` keeps both IDs.
 
 ## What stays the same
 
@@ -66,7 +66,6 @@ The public data in this project has no personal information. Harvest data does, 
 
 ## What I'd build first
 
-1. Add `internal_job_id` to `stg_greenhouse__postings` (already in raw).
-2. `stg_harvest__jobs` and `stg_harvest__applications` with incremental loads.
-3. `fct_requisition_funnel`, the most-requested recruiting view and the easiest to validate against Greenhouse's built-in reports.
-4. The Workday hire join, once the requisition-ID mapping is confirmed with the HRIS team.
+1. `stg_harvest__jobs` and `stg_harvest__applications` with incremental loads.
+2. `fct_requisition_funnel`, the most-requested recruiting view and the easiest to validate against Greenhouse's built-in reports.
+3. The Workday hire join, once the requisition-ID mapping is confirmed with the HRIS team.

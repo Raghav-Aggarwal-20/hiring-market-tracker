@@ -17,6 +17,8 @@ renamed as (
         company_slug,
         posting_id,
 
+        -- Harvest's jobs.id: the join key to internal applications (see docs/harvest_extension.md).
+        json_value(payload, '$.internal_job_id') as internal_job_id,
         json_value(payload, '$.requisition_id') as requisition_id,
         json_value(payload, '$.title') as title,
         -- Every posting has exactly one department (profiled 2026-11-03).
