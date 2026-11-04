@@ -21,3 +21,6 @@ logs/
 .DS_Store
 .vscode/
 .idea/
+
+# Generated dashboard (built in CI)
+dashboard/site/
