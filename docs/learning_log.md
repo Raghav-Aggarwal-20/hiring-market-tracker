@@ -146,3 +146,24 @@ Four marts built as tables (`dim_company`, `dim_posting`, `fct_company_daily`, `
    *Found:* when the completeness test failed, `dbt build` skipped `dim_company` and `fct_postings_current`, because the test read the `companies` seed and dbt skips everything downstream of a failed test's inputs. One dead board would have frozen the dashboard for all 30 companies.
    *Fixed:* the test now reads only `fct_company_daily`, which has no downstream models. Re-ran the same break: the build still fails (CI alerts), nothing is skipped, and the dashboard table refreshes with the healthy companies.
    *Interviewer might ask:* "Tell me about a bug you found in your own pipeline." This one: where a test sits in the DAG decides what it blocks, so placing it was a design decision, not an afterthought.
+
+## Hour 6: Dashboards and automation
+
+1. **Reporting tables shaped for the BI tool.**
+   *Built:* four `rpt_` tables (`rpt_postings_current`, `rpt_company_summary`, `rpt_company_daily`, `rpt_pipeline_health`) with readable labels, a peer-group lens, and every share and median pre-computed in SQL.
+   *Why:* when the dashboard only sums and filters, every tool (Data Studio, the code dashboard, a future LLM layer) shows the same number. Logic in the BI tool drifts; logic in dbt is tested and versioned.
+   *Interviewer might ask:* "Where should metric logic live: the warehouse or the BI tool?" In the warehouse, close to tests and version control; BI should mostly aggregate and display.
+
+2. **Two dashboards, one source of truth.**
+   *Built:* a Google Data Studio (formerly Looker Studio) report with a peer filter, KPI row, function heatmap, workplace mix and a volume-vs-age bubble chart; plus a dashboard-as-code page (`dashboard/build.py` + Plotly) with cross-filtering, insight cards and a searchable roles table.
+   *Why:* Data Studio is what most recruiting teams use; the code version is reviewable, rebuilt by CI, and shows I can ship without a BI license.
+   *Interviewer might ask:* "When would you choose dashboard-as-code over a BI tool?" When the audience is fixed, the logic needs code review, or the page must be published automatically; BI tools win for ad-hoc self-service.
+
+3. **Verify the dashboard, not just the model.**
+   *Checked:* every KPI against `fct_postings_current`, and every company's count against `raw.job_postings` (0 mismatches). *Found:* BigQuery `NUMERIC` pay values were serialized as text, so sorting by pay would have been alphabetical. Fixed by casting `Decimal` to float in the build.
+   *Interviewer might ask:* "How do you QA a dashboard?" Recompute headline numbers from a lower layer with independent SQL, spot-check filtered views, and check data types at every hand-off.
+
+4. **Daily automation with GitHub Actions.**
+   *Built:* `.github/workflows/daily.yml` runs at 11:00 UTC: extract → `dbt source freshness` → `dbt build` → dashboard build, authenticated with a least-privilege service account key stored as a GitHub secret. Any failed step stops the run, so a broken run never publishes a dashboard.
+   *Why:* the pipeline must run without me; the JD asks to "automate recurring recruiting reports."
+   *Interviewer might ask:* "How would you harden this auth?" Replace the JSON key with Workload Identity Federation so GitHub gets short-lived tokens and no long-lived key exists (planned after week 1).
