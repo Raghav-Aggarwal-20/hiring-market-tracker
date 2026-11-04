@@ -5,225 +5,370 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hiring Market Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root {
-    --bg: #F9F9F7; --card: #FFFFFF; --border: #E1E0D9; --ink: #0B0B0B; --ink-2: #52514E; --muted: #8A8984;
-    --blue: #2A78D6; --orange: #EB6834; --green: #1BAF7A; --amber: #EDA100; --gray: #D3D1C7;
-    --good: #1BAF7A; --bad: #E34948;
+    --bg: #F4F3EF; --card: #FFFFFF; --border: #E4E2DA; --ink: #0B0B0B; --ink-2: #52514E; --muted: #8A8984;
+    --navy: #0E1B33; --navy-2: #1B3A6B;
+    --blue: #2A78D6; --orange: #EB6834; --green: #1BAF7A; --amber: #EDA100; --pink: #E87BA4; --purple: #6250D6; --red: #E34948; --gray: #D3D1C7;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 Inter, Roboto, system-ui, sans-serif; }
-  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px 16px 48px; }
-  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
-  h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
-  .sub { color: var(--ink-2); margin-top: 4px; }
-  select { font: inherit; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--ink); }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px 48px; }
+
+  /* Hero */
+  .hero { background: radial-gradient(1200px 400px at 85% -20%, #2A78D655, transparent), linear-gradient(135deg, var(--navy), var(--navy-2)); color: #fff; padding: 28px 0 72px; }
+  .hero .wrap { padding-bottom: 0; }
+  .hero-top { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-start; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #9EC3EE; font-weight: 600; }
+  h1 { margin: 6px 0 4px; font-size: clamp(26px, 4vw, 38px); font-weight: 800; letter-spacing: -0.02em; }
+  .hero .sub { color: #C9D6EA; max-width: 640px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: #ffffff1a; border: 1px solid #ffffff2e; font-size: 12.5px; white-space: nowrap; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 #1BAF7A99; animation: pulse 2s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 8px #1BAF7A00; } 100% { box-shadow: 0 0 0 0 #1BAF7A00; } }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 22px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 12px; background: #ffffff14; border: 1px solid #ffffff26; }
+  .seg button { font: inherit; font-size: 13px; color: #DCE6F5; background: transparent; border: 0; padding: 7px 12px; border-radius: 9px; cursor: pointer; transition: background .2s, color .2s; }
+  .seg button:hover { background: #ffffff1f; color: #fff; }
+  .seg button.on { background: #fff; color: var(--navy); font-weight: 600; }
+  .focus-chip { display: none; align-items: center; gap: 8px; padding: 7px 8px 7px 12px; border-radius: 999px; background: var(--amber); color: #2B1D00; font-weight: 600; font-size: 13px; }
+  .focus-chip.show { display: inline-flex; animation: pop .25s ease-out; }
+  .focus-chip button { border: 0; background: #0000001f; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-weight: 700; color: inherit; }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* Layout */
+  .lift { margin-top: -48px; }
   .grid { display: grid; gap: 16px; grid-template-columns: repeat(12, 1fr); }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; min-width: 0; }
-  .card h2 { margin: 0 0 2px; font-size: 15px; font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; min-width: 0; box-shadow: 0 1px 2px #0000000a; }
+  .card h2 { margin: 0 0 2px; font-size: 15px; font-weight: 700; }
   .card .hint { color: var(--ink-2); font-size: 12.5px; margin-bottom: 8px; }
-  .kpi { grid-column: span 12; }
-  .kpi .label { color: var(--ink-2); font-size: 12.5px; }
-  .kpi .value { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; }
-  .kpi .foot { color: var(--muted); font-size: 12px; }
-  @media (min-width: 720px) { .kpi { grid-column: span 4; } }
-  @media (min-width: 1100px) { .kpi { grid-column: span 2; } .kpi.wide { grid-column: span 2; } }
   .full { grid-column: span 12; }
   .half { grid-column: span 12; }
   @media (min-width: 1000px) { .half { grid-column: span 6; } }
-  .table-wrap { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+  section.card { animation: rise .5s ease-out both; }
+  @keyframes rise { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* KPIs */
+  .kpi { grid-column: span 6; position: relative; overflow: hidden; }
+  @media (min-width: 720px) { .kpi { grid-column: span 4; } }
+  @media (min-width: 1100px) { .kpi { grid-column: span 2; } }
+  .kpi::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--accent, var(--blue)); }
+  .kpi .label { color: var(--ink-2); font-size: 12.5px; font-weight: 500; }
+  .kpi .value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .foot { color: var(--muted); font-size: 12px; }
+  .meter { height: 6px; border-radius: 3px; background: #EEEDE8; margin: 8px 0 4px; overflow: hidden; }
+  .meter span { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width .6s ease; }
+
+  /* Insights */
+  .insights { margin: 16px 0; }
+  .insight { grid-column: span 12; cursor: pointer; display: flex; gap: 12px; align-items: center; transition: transform .15s, box-shadow .15s; }
+  .insight:hover { transform: translateY(-2px); box-shadow: 0 6px 18px #0000001a; }
+  @media (min-width: 720px) { .insight { grid-column: span 6; } }
+  @media (min-width: 1100px) { .insight { grid-column: span 3; } }
+  .insight .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; flex: none; }
+  .insight .k { color: var(--ink-2); font-size: 12px; }
+  .insight .v { font-weight: 700; font-size: 15px; }
+  .insight .n { color: var(--muted); font-size: 12px; }
+
+  /* Table */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .search { flex: 1 1 220px; font: inherit; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: #FAFAF8; }
+  .search:focus { outline: 2px solid var(--blue); outline-offset: 1px; background: #fff; }
+  .tag { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border-radius: 999px; background: #EAF2FC; color: var(--navy-2); font-size: 12px; font-weight: 600; }
+  .tag button { border: 0; background: none; cursor: pointer; color: inherit; font-weight: 700; }
+  .count { color: var(--muted); font-size: 12.5px; margin-left: auto; }
+  .table-wrap { overflow: auto; max-height: 520px; border-radius: 10px; }
   table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  th { position: sticky; top: 0; background: var(--card); color: var(--ink-2); font-weight: 600; cursor: pointer; user-select: none; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #EEEDE8; white-space: nowrap; }
+  th { position: sticky; top: 0; z-index: 1; background: #FAFAF8; color: var(--ink-2); font-weight: 600; cursor: pointer; user-select: none; }
   th:hover { color: var(--ink); }
+  tbody tr { transition: background .15s; }
+  tbody tr:hover { background: #F5F9FE; }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  td.title { white-space: normal; min-width: 240px; }
-  a { color: var(--blue); text-decoration: none; font-weight: 500; }
-  a:hover { text-decoration: underline; }
-  .chips { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
-  .chip { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; display: flex; gap: 8px; align-items: center; }
+  td.title { white-space: normal; min-width: 240px; font-weight: 500; }
+  .fam { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .paybar { display: inline-block; height: 6px; border-radius: 3px; background: var(--green); vertical-align: middle; margin-right: 6px; opacity: .8; }
+  .age-chip { display: inline-block; min-width: 34px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; text-align: center; }
+  a.apply { color: #fff; background: var(--blue); padding: 4px 10px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 12px; transition: background .15s; }
+  a.apply:hover { background: var(--navy-2); }
+  .empty { padding: 24px; text-align: center; color: var(--muted); }
+
+  /* Health */
+  .chips { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .chip { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; display: flex; gap: 8px; align-items: center; cursor: pointer; transition: border-color .15s; }
+  .chip:hover { border-color: var(--blue); }
   .chip .dot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; flex: none; }
-  .chip .name { font-weight: 500; }
+  .chip .name { font-weight: 600; }
   .chip .meta { color: var(--muted); font-size: 12px; }
   footer { color: var(--muted); font-size: 12px; margin-top: 20px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>Hiring Market Tracker</h1>
-      <div class="sub" id="asof"></div>
+<div class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">Hiring Market Tracker</div>
+        <h1 id="headline">Who's hiring, for what, and how fast</h1>
+        <div class="sub">Every open posting at 30 tech, data &amp; HR-tech companies, pulled daily from their public job boards. Click any company, bar or bubble to focus the whole page on it.</div>
+      </div>
+      <span class="pill"><span class="pulse"></span><span id="asof"></span></span>
     </div>
-    <label>Peer group&nbsp;
-      <select id="lens">
-        <option value="">All companies</option>
-        <option>Elastic</option>
-        <option>HR tech and analytics</option>
-        <option>Data and AI</option>
-        <option>Other peers</option>
-      </select>
-    </label>
-  </header>
+    <div class="controls">
+      <div class="seg" id="lenses"></div>
+      <span class="focus-chip" id="focus"><span id="focus-name"></span><button title="Clear company focus" aria-label="Clear company focus">×</button></span>
+    </div>
+  </div>
+</div>
 
+<div class="wrap lift">
   <div class="grid" id="kpis"></div>
+  <div class="grid insights" id="insights"></div>
 
-  <div class="grid" style="margin-top:16px">
+  <div class="grid">
     <section class="card full">
       <h2>What each company is hiring for</h2>
-      <div class="hint">Share of each company's open postings by function. Darker = bigger share. Sorted by open postings.</div>
+      <div class="hint">Share of open postings by function. Darker = bigger share. Click a row to focus that company.</div>
       <div id="heatmap"></div>
     </section>
 
     <section class="card half">
       <h2>Where the work happens</h2>
-      <div class="hint">Workplace mix of open postings. Gray = the posting doesn't say.</div>
+      <div class="hint">Workplace mix, most remote first. Gray = the posting doesn't say.</div>
       <div id="workplace"></div>
     </section>
 
     <section class="card half">
       <h2>Hiring volume vs. how long roles stay open</h2>
-      <div class="hint">Each bubble is a company. Bubble size = open data &amp; analytics roles. Higher = reqs sit open longer.</div>
+      <div class="hint">Each bubble is a company; size = open data &amp; analytics roles. Top-right = hiring a lot <em>and</em> struggling to fill.</div>
       <div id="bubble"></div>
     </section>
 
     <section class="card full">
+      <h2>Data &amp; analytics roles by family</h2>
+      <div class="hint">Click a bar to filter the roles list.</div>
+      <div id="families"></div>
+    </section>
+
+    <section class="card full">
       <h2>Open data &amp; analytics roles</h2>
-      <div class="hint">Click a column to sort. Pay shown only where it's a usable annual USD range.</div>
+      <div class="toolbar">
+        <input class="search" id="q" type="search" placeholder="Search title or company…" aria-label="Search roles">
+        <span id="famtag"></span>
+        <span class="count" id="rolecount"></span>
+      </div>
       <div class="table-wrap"><table id="roles"></table></div>
     </section>
 
     <section class="card full">
       <h2>Pipeline health</h2>
-      <div class="hint">Latest daily extract per company. A missed extract never closes postings.</div>
+      <div class="hint">Latest daily extract per company. A failed extract never closes postings.</div>
       <div class="chips" id="health"></div>
     </section>
   </div>
-
-  <footer>Source: public Greenhouse &amp; Ashby job-board APIs → BigQuery → dbt. Rebuilt daily by GitHub Actions.</footer>
+  <footer>Source: public Greenhouse &amp; Ashby job-board APIs → BigQuery → dbt → this page. Rebuilt daily by GitHub Actions.</footer>
 </div>
 
 <script>
 const DATA = __DATA__;
+const LENSES = ["", "Elastic", "HR tech and analytics", "Data and AI", "Other peers"];
 const LENS_COLORS = { "Elastic": "#2A78D6", "HR tech and analytics": "#EB6834", "Data and AI": "#1BAF7A", "Other peers": "#6250D6" };
+const FAMILY_COLORS = ["#2A78D6", "#EB6834", "#1BAF7A", "#EDA100", "#E87BA4", "#6250D6", "#008300"];
 const FUNCS = [["share_engineering","Eng"],["share_sales","Sales"],["share_data_analytics","Data"],["share_people_hr","People/HR"],
                ["share_customer","Customer"],["share_marketing","Marketing"],["share_product_design","Product"],["share_g_and_a","G&A"]];
 const FONT = { family: "Inter, Roboto, sans-serif", size: 12, color: "#52514E" };
 const CONFIG = { displayModeBar: false, responsive: true };
-const fmt = n => n == null ? "–" : Math.round(n).toLocaleString("en-US");
-const pct = x => x == null ? "–" : Math.round(x * 100) + "%";
-const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const BASE = { font: FONT, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", hoverlabel: { bgcolor: "#0E1B33", font: { color: "#fff", family: FONT.family } }, transition: { duration: 400, easing: "cubic-in-out" } };
+
 // Titles and URLs come from third-party job boards, so escape before writing them as HTML.
 const esc = s => String(s ?? "–").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
-const byLens = (rows, lens) => lens ? rows.filter(r => r.peer_lens === lens) : rows;
+const fmt = n => n == null || isNaN(n) ? "–" : Math.round(n).toLocaleString("en-US");
+const pct = x => x == null || isNaN(x) ? "–" : Math.round(x * 100) + "%";
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
-document.getElementById("asof").textContent =
-  `Open postings at ${DATA.companies.length} companies · snapshot ${DATA.health[0].latest_snapshot_date}`;
+const state = { lens: "", company: null, family: null, q: "", sortKey: "age", sortAsc: true };
+const families = [...new Set(DATA.data_roles.map(r => r.family))].sort();
+const famColor = f => FAMILY_COLORS[families.indexOf(f) % FAMILY_COLORS.length];
+const inLens = rows => state.lens ? rows.filter(r => r.peer_lens === state.lens) : rows;
+const inFocus = rows => state.company ? rows.filter(r => r.company_name === state.company) : inLens(rows);
 
-function kpis(lens) {
-  const c = byLens(DATA.companies, lens), sum = k => c.reduce((t, r) => t + (r[k] || 0), 0);
-  const stated = sum("remote_postings") + sum("hybrid_postings") + sum("onsite_postings");
+document.getElementById("asof").textContent = `Live · snapshot ${DATA.health[0].latest_snapshot_date}`;
+
+// ---------- KPIs with count-up ----------
+const shown = {};
+function countUp(el, key, to, format) {
+  const from = shown[key] ?? 0, start = performance.now();
+  shown[key] = to;
+  if (to == null || isNaN(to)) { el.textContent = "–"; return; }
+  // Hidden tabs pause requestAnimationFrame; jump to the final value so numbers are never stale.
+  if (document.hidden) { el.textContent = format(to); return; }
+  const step = t => { const p = Math.min(1, (t - start) / 600), e = 1 - Math.pow(1 - p, 3); el.textContent = format(from + (to - from) * e); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function kpis() {
+  const c = inFocus(DATA.companies), sum = k => c.reduce((t, r) => t + (r[k] || 0), 0);
+  const open = sum("open_postings"), stated = sum("remote_postings") + sum("hybrid_postings") + sum("onsite_postings");
   const tiles = [
-    ["Open postings", fmt(sum("open_postings")), "across all functions"],
-    ["Companies", fmt(c.length), "tracked daily"],
-    ["Data & analytics roles", fmt(sum("data_roles")), "analyst · AE · DS · DE · BI"],
-    ["Remote share", pct(stated ? sum("remote_postings") / stated : null), `of ${fmt(stated)} that state it`],
-    ["Median posting age", fmt(median(byLens(DATA.ages, lens).map(r => r.age))) + " days", "since first published"],
-    ["Not stated", pct(sum("workplace_not_stated") / sum("open_postings")), "postings with no workplace"],
+    ["open", "Open postings", open, fmt, "across all functions", "#2A78D6"],
+    ["cos", state.company ? "Company" : "Companies", c.length, fmt, state.company ? esc(state.company) : "tracked daily", "#6250D6"],
+    ["data", "Data & analytics roles", sum("data_roles"), fmt, `${pct(sum("data_roles") / open)} of postings`, "#1BAF7A"],
+    ["remote", "Remote share", stated ? sum("remote_postings") / stated : NaN, pct, `of ${fmt(stated)} that state it`, "#EB6834", true],
+    ["age", "Median posting age", median(inFocus(DATA.ages).map(r => r.age)), x => fmt(x) + "d", "days since first published", "#EDA100"],
+    ["ns", "Workplace not stated", open ? sum("workplace_not_stated") / open : NaN, pct, "a data-quality signal", "#8A8984", true],
   ];
-  document.getElementById("kpis").innerHTML = tiles.map(([l, v, f]) =>
-    `<div class="card kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="foot">${f}</div></div>`).join("");
+  const box = document.getElementById("kpis");
+  if (!box.children.length) box.innerHTML = tiles.map(([k, l, , , , a]) =>
+    `<div class="card kpi" style="--accent:${a}"><div class="label">${l}</div><div class="value" data-k="${k}">0</div><div class="meter" data-m="${k}" hidden><span></span></div><div class="foot" data-f="${k}"></div></div>`).join("");
+  tiles.forEach(([k, l, v, f, foot, , meter]) => {
+    box.querySelector(`[data-k="${k}"]`).previousElementSibling.textContent = l;
+    countUp(box.querySelector(`[data-k="${k}"]`), k, v, f);
+    box.querySelector(`[data-f="${k}"]`).innerHTML = foot;
+    const m = box.querySelector(`[data-m="${k}"]`);
+    if (meter) { m.hidden = false; m.firstElementChild.style.width = (isNaN(v) ? 0 : v * 100) + "%"; }
+  });
 }
 
-function heatmap(lens) {
-  const c = byLens(DATA.companies, lens);
-  const z = c.map(r => FUNCS.map(([k]) => r[k] || 0));
+// ---------- Insights (computed, clickable) ----------
+function insights() {
+  const c = inLens(DATA.companies);
+  const top = (rows, f) => rows.reduce((a, b) => (f(b) > f(a) ? b : a), rows[0]);
+  const stated = r => r.remote_postings + r.hybrid_postings + r.onsite_postings;
+  const big = c.filter(r => r.open_postings >= 20);
+  const remoteRows = c.filter(r => stated(r) >= 20);
+  const cards = [
+    ["🏆", "#EAF2FC", "Biggest hirer", top(c, r => r.open_postings), r => `${fmt(r.open_postings)} open postings`],
+    ["📊", "#E6F7F0", "Most data & analytics roles", top(c, r => r.data_roles), r => `${fmt(r.data_roles)} roles · ${pct(r.data_roles / r.open_postings)} of its postings`],
+    ["🌍", "#FDEEE7", "Most remote-friendly", remoteRows.length ? top(remoteRows, r => r.remote_postings / stated(r)) : null, r => `${pct(r.remote_postings / stated(r))} remote of stated`],
+    ["⏳", "#FDF5E0", "Slowest to fill", big.length ? top(big, r => r.median_age_days) : null, r => `median ${fmt(r.median_age_days)} days open`],
+  ];
+  document.getElementById("insights").innerHTML = cards.filter(x => x[3]).map(([ico, bg, k, r, txt]) =>
+    `<div class="card insight" data-c="${esc(r.company_name)}"><div class="ico" style="background:${bg}">${ico}</div>
+      <div><div class="k">${k}</div><div class="v">${esc(r.company_name)}</div><div class="n">${txt(r)}</div></div></div>`).join("");
+}
+document.getElementById("insights").addEventListener("click", e => { const c = e.target.closest(".insight")?.dataset.c; if (c) focus(c); });
+
+// ---------- Charts ----------
+function heatmap() {
+  const c = inLens(DATA.companies), z = c.map(r => FUNCS.map(([k]) => r[k] || 0));
+  const i = c.findIndex(r => r.company_name === state.company);
   Plotly.react("heatmap", [{
-    type: "heatmap", z, x: FUNCS.map(f => f[1]), y: c.map(r => `${r.company_name} (${r.open_postings})`),
-    colorscale: [[0, "#F3F7FD"], [0.35, "#9EC3EE"], [1, "#1B5BAA"]], zmin: 0, zmax: 0.6, xgap: 2, ygap: 2,
+    type: "heatmap", z, x: FUNCS.map(f => f[1]), y: c.map(r => r.company_name), customdata: c.map(r => r.open_postings),
+    colorscale: [[0, "#F3F7FD"], [0.3, "#9EC3EE"], [0.65, "#2A78D6"], [1, "#0E1B33"]], zmin: 0, zmax: 0.6, xgap: 3, ygap: 3,
     text: z.map(row => row.map(pct)), texttemplate: "%{text}", textfont: { size: 11 },
-    hovertemplate: "%{y}<br>%{x}: %{text}<extra></extra>", showscale: false,
-  }], {
-    font: FONT, height: Math.max(260, 26 * c.length + 60), margin: { l: 170, r: 10, t: 30, b: 10 },
+    hovertemplate: "<b>%{y}</b> (%{customdata} open)<br>%{x}: %{text}<extra></extra>", showscale: false,
+  }], { ...BASE, transition: undefined, height: Math.max(260, 26 * c.length + 60), margin: { l: 130, r: 10, t: 30, b: 10 },
     xaxis: { side: "top", fixedrange: true }, yaxis: { autorange: "reversed", fixedrange: true },
-    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    shapes: i < 0 ? [] : [{ type: "rect", xref: "x", yref: "y", x0: -0.5, x1: FUNCS.length - 0.5, y0: i - 0.5, y1: i + 0.5, line: { color: "#EDA100", width: 3 } }],
   }, CONFIG);
 }
 
-function workplace(lens) {
-  const c = byLens(DATA.companies, lens).slice()
-    .sort((a, b) => b.remote_postings / b.open_postings - a.remote_postings / a.open_postings);
-  const series = [["remote_postings", "Remote", "#2A78D6"], ["hybrid_postings", "Hybrid", "#EB6834"],
-                  ["onsite_postings", "Onsite", "#1BAF7A"], ["workplace_not_stated", "Not stated", "#D3D1C7"]];
+function workplace() {
+  const c = inLens(DATA.companies).slice().sort((a, b) => b.remote_postings / b.open_postings - a.remote_postings / a.open_postings);
+  const op = c.map(r => !state.company || r.company_name === state.company ? 1 : 0.25);
+  const series = [["remote_postings", "Remote", "#2A78D6"], ["hybrid_postings", "Hybrid", "#EB6834"], ["onsite_postings", "Onsite", "#1BAF7A"], ["workplace_not_stated", "Not stated", "#D3D1C7"]];
   Plotly.react("workplace", series.map(([k, name, color]) => ({
-    type: "bar", orientation: "h", name, marker: { color, line: { color: "#fff", width: 1 } },
+    type: "bar", orientation: "h", name, marker: { color, opacity: op, line: { color: "#fff", width: 1 } },
     y: c.map(r => r.company_name), x: c.map(r => r[k] / r.open_postings), customdata: c.map(r => r[k]),
-    hovertemplate: `%{y} · ${name}: %{x:.0%} (%{customdata})<extra></extra>`,
-  })), {
-    barmode: "stack", font: FONT, height: Math.max(260, 22 * c.length + 70), margin: { l: 130, r: 10, t: 10, b: 30 },
+    hovertemplate: `<b>%{y}</b><br>${name}: %{x:.0%} (%{customdata})<extra></extra>`,
+  })), { ...BASE, barmode: "stack", height: Math.max(300, 22 * c.length + 70), margin: { l: 120, r: 10, t: 10, b: 30 },
     xaxis: { tickformat: ".0%", range: [0, 1], fixedrange: true, gridcolor: "#EEEDE8" },
-    yaxis: { autorange: "reversed", fixedrange: true }, legend: { orientation: "h", y: -0.08, traceorder: "normal" },
-    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    yaxis: { autorange: "reversed", fixedrange: true }, legend: { orientation: "h", y: -0.06, traceorder: "normal" },
   }, CONFIG);
 }
 
-function bubble(lens) {
-  const c = byLens(DATA.companies, lens);
-  const groups = [...new Set(c.map(r => r.peer_lens))];
+function bubble() {
+  const c = inLens(DATA.companies), groups = [...new Set(c.map(r => r.peer_lens))];
   Plotly.react("bubble", groups.map(g => {
-    const r = c.filter(x => x.peer_lens === g);
+    const r = c.filter(x => x.peer_lens === g), sel = x => !state.company || x.company_name === state.company;
     return {
       type: "scatter", mode: "markers+text", name: g, x: r.map(x => x.open_postings), y: r.map(x => x.median_age_days),
-      text: r.map(x => x.company_name), textposition: "top center", textfont: { size: 10, color: "#52514E" },
-      customdata: r.map(x => x.data_roles),
-      marker: { size: r.map(x => 10 + 3 * Math.sqrt(x.data_roles || 0)), color: LENS_COLORS[g], opacity: 0.85, line: { color: "#fff", width: 2 } },
+      text: r.map(x => x.company_name), textposition: "top center",
+      textfont: { size: 10, color: r.map(x => sel(x) ? "#0B0B0B" : "#C8C7C1") }, customdata: r.map(x => x.data_roles),
+      marker: { size: r.map(x => 12 + 3.2 * Math.sqrt(x.data_roles || 0)), color: LENS_COLORS[g], opacity: r.map(x => sel(x) ? 0.9 : 0.15),
+                line: { color: r.map(x => x.company_name === state.company ? "#EDA100" : "#fff"), width: r.map(x => x.company_name === state.company ? 4 : 2) } },
       hovertemplate: "<b>%{text}</b><br>%{x} open · median %{y} days<br>%{customdata} data roles<extra></extra>",
     };
-  }), {
-    font: FONT, height: 520, margin: { l: 50, r: 10, t: 10, b: 70 }, legend: { orientation: "h", y: -0.15 },
-    xaxis: { type: "log", title: "Open postings (log scale)", gridcolor: "#EEEDE8" },
+  }), { ...BASE, height: Math.max(420, 22 * c.length + 70), margin: { l: 50, r: 10, t: 10, b: 80 }, legend: { orientation: "h", y: -0.16 },
+    xaxis: { type: "log", title: "Open postings (log scale)", gridcolor: "#EEEDE8", tickvals: [5, 10, 20, 50, 100, 200, 500, 1000] },
     yaxis: { title: "Median days open", gridcolor: "#EEEDE8", rangemode: "tozero" },
-    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
   }, CONFIG);
 }
 
-let sortKey = "age", sortAsc = true;
+function familiesChart() {
+  const rows = inFocus(DATA.data_roles), counts = families.map(f => rows.filter(r => r.family === f).length);
+  const order = families.map((f, i) => [f, counts[i]]).sort((a, b) => a[1] - b[1]);
+  Plotly.react("families", [{
+    type: "bar", orientation: "h", y: order.map(o => o[0]), x: order.map(o => o[1]), text: order.map(o => o[1]), textposition: "outside", cliponaxis: false,
+    marker: { color: order.map(o => famColor(o[0])), opacity: order.map(o => !state.family || state.family === o[0] ? 1 : 0.25) },
+    hovertemplate: "<b>%{y}</b>: %{x} roles<extra></extra>",
+  }], { ...BASE, height: 230, margin: { l: 150, r: 40, t: 0, b: 10 }, bargap: 0.25, xaxis: { visible: false, fixedrange: true }, yaxis: { fixedrange: true } }, CONFIG);
+}
+
+// ---------- Roles table ----------
 const COLS = [["company_name", "Company"], ["title", "Title"], ["family", "Family"], ["seniority", "Level"],
               ["workplace", "Workplace"], ["location", "US?"], ["pay_mid", "Pay midpoint", "num"], ["age", "Days open", "num"], ["job_url", ""]];
-function roles(lens) {
-  const rows = byLens(DATA.data_roles, lens).slice().sort((a, b) => {
-    const x = a[sortKey], y = b[sortKey];
-    if (x == null) return 1; if (y == null) return -1;
-    return (x < y ? -1 : x > y ? 1 : 0) * (sortAsc ? 1 : -1);
-  });
-  const cell = (r, [k, , cls]) => k === "job_url"
-      ? (/^https:\/\//.test(r.job_url || "") ? `<td><a href="${esc(r.job_url)}" target="_blank" rel="noopener">Apply ↗</a></td>` : "<td></td>")
-    : k === "pay_mid" ? `<td class="num">${r.pay_mid ? "$" + fmt(r.pay_mid) : "–"}</td>`
+const maxPay = Math.max(...DATA.data_roles.map(r => r.pay_mid || 0));
+const ageStyle = a => a <= 14 ? "background:#E6F7F0;color:#0B6B47" : a <= 60 ? "background:#FDF5E0;color:#7A5300" : "background:#FDEBEB;color:#9B1C1C";
+function roles() {
+  const q = state.q.toLowerCase();
+  const rows = inFocus(DATA.data_roles)
+    .filter(r => !state.family || r.family === state.family)
+    .filter(r => !q || (r.title + " " + r.company_name).toLowerCase().includes(q))
+    .sort((a, b) => { const x = a[state.sortKey], y = b[state.sortKey]; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * (state.sortAsc ? 1 : -1); });
+  const cell = (r, [k, , cls]) =>
+      k === "job_url" ? `<td>${/^https:\/\//.test(r.job_url || "") ? `<a class="apply" href="${esc(r.job_url)}" target="_blank" rel="noopener">Apply ↗</a>` : ""}</td>`
+    : k === "pay_mid" ? `<td class="num">${r.pay_mid ? `<span class="paybar" style="width:${Math.round(40 * r.pay_mid / maxPay)}px"></span>$${fmt(r.pay_mid)}` : "<span style='color:var(--muted)'>–</span>"}</td>`
+    : k === "age" ? `<td class="num"><span class="age-chip" style="${ageStyle(r.age)}">${fmt(r.age)}</span></td>`
+    : k === "family" ? `<td><span class="fam" style="background:${famColor(r.family)}"></span>${esc(r.family)}</td>`
     : `<td class="${k === "title" ? "title" : cls || ""}">${esc(r[k])}</td>`;
   document.getElementById("roles").innerHTML =
-    `<thead><tr>${COLS.map(([k, l, cls]) => `<th data-k="${k}" class="${cls || ""}">${l}${k === sortKey ? (sortAsc ? " ↑" : " ↓") : ""}</th>`).join("")}</tr></thead>` +
-    `<tbody>${rows.map(r => `<tr>${COLS.map(c => cell(r, c)).join("")}</tr>`).join("")}</tbody>`;
+    `<thead><tr>${COLS.map(([k, l, cls]) => `<th data-k="${k}" class="${cls || ""}">${l}${k === state.sortKey ? (state.sortAsc ? " ↑" : " ↓") : ""}</th>`).join("")}</tr></thead>` +
+    `<tbody>${rows.length ? rows.map(r => `<tr>${COLS.map(c => cell(r, c)).join("")}</tr>`).join("") : `<tr><td class="empty" colspan="${COLS.length}">No roles match these filters.</td></tr>`}</tbody>`;
+  document.getElementById("rolecount").textContent = `${rows.length} role${rows.length === 1 ? "" : "s"}`;
+  document.getElementById("famtag").innerHTML = state.family ? `<span class="tag">${esc(state.family)}<button aria-label="Clear family filter">×</button></span>` : "";
 }
 document.getElementById("roles").addEventListener("click", e => {
   const k = e.target.closest("th")?.dataset.k;
   if (!k || k === "job_url") return;
-  sortAsc = k === sortKey ? !sortAsc : true; sortKey = k; roles(lens.value);
+  state.sortAsc = k === state.sortKey ? !state.sortAsc : true; state.sortKey = k; roles();
 });
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; roles(); });
+document.getElementById("famtag").addEventListener("click", e => { if (e.target.tagName === "BUTTON") { state.family = null; familiesChart(); roles(); } });
 
-function health(lens) {
-  document.getElementById("health").innerHTML = byLens(DATA.health, lens).map(r => {
+function health() {
+  document.getElementById("health").innerHTML = inLens(DATA.health).map(r => {
     const ok = r.status_label === "OK";
-    return `<div class="chip"><span class="dot" style="background:${ok ? "var(--good)" : "var(--bad)"}">${ok ? "✓" : "!"}</span>
+    return `<div class="chip" data-c="${esc(r.company_name)}"><span class="dot" style="background:${ok ? "var(--green)" : "var(--red)"}">${ok ? "✓" : "!"}</span>
       <div><div class="name">${esc(r.company_name)}</div><div class="meta">${ok ? "OK" : "Needs attention"} · ${fmt(r.postings_extracted)} postings</div></div></div>`;
   }).join("");
 }
+document.getElementById("health").addEventListener("click", e => { const c = e.target.closest(".chip")?.dataset.c; if (c) focus(c); });
 
-const lens = document.getElementById("lens");
-function render() { const v = lens.value; kpis(v); heatmap(v); workplace(v); bubble(v); roles(v); health(v); }
-lens.addEventListener("change", render);
+// ---------- Interaction wiring ----------
+function focus(company) {
+  state.company = state.company === company ? null : company;
+  const chip = document.getElementById("focus");
+  chip.classList.toggle("show", !!state.company);
+  document.getElementById("focus-name").textContent = state.company ? `Focus: ${state.company}` : "";
+  render();
+}
+document.querySelector("#focus button").addEventListener("click", () => focus(state.company));
+
+document.getElementById("lenses").innerHTML = LENSES.map(l => `<button data-l="${l}" class="${l === "" ? "on" : ""}">${l || "All companies"}</button>`).join("");
+document.getElementById("lenses").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.lens = b.dataset.l; state.company = null; state.family = null;
+  document.getElementById("focus").classList.remove("show");
+  document.querySelectorAll("#lenses button").forEach(x => x.classList.toggle("on", x === b));
+  render();
+});
+
+function render() { kpis(); insights(); heatmap(); workplace(); bubble(); familiesChart(); roles(); health(); }
 render();
+["heatmap", "workplace"].forEach(id => document.getElementById(id).on("plotly_click", ev => focus(ev.points[0].y)));
+document.getElementById("bubble").on("plotly_click", ev => focus(ev.points[0].text));
+document.getElementById("families").on("plotly_click", ev => { const f = ev.points[0].y; state.family = state.family === f ? null : f; familiesChart(); roles(); });
 </script>
 </body>
 </html>

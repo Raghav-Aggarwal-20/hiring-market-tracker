@@ -5,6 +5,7 @@ Run: python -m dashboard.build   (writes dashboard/site/index.html)
 
 import json
 import os
+from decimal import Decimal
 from pathlib import Path
 
 from google.cloud import bigquery
@@ -25,7 +26,7 @@ QUERIES = {
         order by open_postings desc
     """,
     # One row per posting, only the two fields the client needs for exact median age per filter.
-    "ages": "select peer_lens, reported_age_days as age from `{ds}.rpt_postings_current`",
+    "ages": "select peer_lens, company_name, reported_age_days as age from `{ds}.rpt_postings_current`",
     "data_roles": """
         select company_name, peer_lens, title, data_role_family_label as family, workplace_label as workplace,
                us_label as location, seniority_label as seniority,
@@ -62,7 +63,9 @@ def main():
     html = (HERE / "template.html").read_text()
     OUT.parent.mkdir(exist_ok=True)
     # "</" inside a <script> block would end it early if a job title ever contained "</script>".
-    payload = json.dumps(data, default=str).replace("</", "<\\/")
+    # BigQuery NUMERIC arrives as Decimal; it must stay a number or JS sorts pay as text.
+    to_json = lambda o: float(o) if isinstance(o, Decimal) else str(o)
+    payload = json.dumps(data, default=to_json).replace("</", "<\\/")
     OUT.write_text(html.replace("__DATA__", payload))
     print(f"wrote {OUT} ({OUT.stat().st_size // 1024} KB, {len(data['ages'])} postings)")
 
