@@ -35,6 +35,14 @@ QUERIES = {
         where is_data_role
         order by age
     """,
+    # Failed extract days are left out; their counts are NULL by design.
+    "daily": """
+        select snapshot_date as day, company_name, peer_lens, open_postings as open, new_postings as new_n,
+               closed_postings as closed
+        from `{ds}.rpt_company_daily`
+        where is_active and is_successful
+        order by snapshot_date
+    """,
     "health": """
         select company_name, peer_lens, status_label, latest_status, postings_extracted,
                last_successful_date, latest_snapshot_date, share_pay_usable, share_workplace_not_stated
@@ -59,6 +67,9 @@ def main():
     # A page built from empty tables would publish a blank dashboard; fail the run instead.
     assert all(data[k] for k in QUERIES), {k: len(v) for k, v in data.items()}
     assert sum(c["open_postings"] for c in data["companies"]) == len(data["ages"])
+    # Equal on a clean day; lower when a company's extract failed (its postings stay open but it has no daily row).
+    last_day = max(r["day"] for r in data["daily"])
+    assert sum(r["open"] for r in data["daily"] if r["day"] == last_day) <= len(data["ages"])
 
     html = (HERE / "template.html").read_text()
     OUT.parent.mkdir(exist_ok=True)

@@ -127,6 +127,24 @@
   <div class="grid insights" id="insights"></div>
 
   <div class="grid">
+    <section class="card half">
+      <h2>Open postings, day by day</h2>
+      <div class="hint" id="trend-hint">Total open postings on each daily snapshot.</div>
+      <div id="trend"></div>
+    </section>
+
+    <section class="card half">
+      <h2>Opened vs. closed each day</h2>
+      <div class="hint">A posting closes on the first successful extract it's missing from. The first day is the baseline, so it has no "opened" count.</div>
+      <div id="flow"></div>
+    </section>
+
+    <section class="card full">
+      <h2>Who grew and who shrank</h2>
+      <div class="hint" id="movers-hint">Change in open postings since tracking began. Click a bar to focus that company.</div>
+      <div id="movers"></div>
+    </section>
+
     <section class="card full">
       <h2>What each company is hiring for</h2>
       <div class="hint">Share of open postings by function. Darker = bigger share. Click a row to focus that company.</div>
@@ -295,6 +313,54 @@ function bubble() {
   }, CONFIG);
 }
 
+// ---------- Day by day ----------
+const DAYS = [...new Set(DATA.daily.map(r => r.day))].sort();
+const shortDay = d => new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+function byDay(rows, k) { return DAYS.map(d => { const v = rows.filter(r => r.day === d && r[k] != null); return v.length ? v.reduce((t, r) => t + r[k], 0) : null; }); }
+
+function trend() {
+  const rows = inFocus(DATA.daily), open = byDay(rows, "open");
+  const first = open.find(v => v != null), last = open[open.length - 1], d = last - first;
+  document.getElementById("trend-hint").textContent =
+    `${DAYS.length} daily snapshots. ${fmt(first)} → ${fmt(last)} open (${d >= 0 ? "+" : ""}${fmt(d)}).`;
+  Plotly.react("trend", [{
+    type: "scatter", mode: "lines+markers", x: DAYS.map(shortDay), y: open, line: { color: "#2A78D6", width: 2 },
+    marker: { size: 8, color: "#2A78D6", line: { color: "#fff", width: 2 } },
+    hovertemplate: "<b>%{x}</b><br>%{y:,} open<extra></extra>",
+  }], { ...BASE, height: 280, margin: { l: 50, r: 10, t: 10, b: 40 },
+    xaxis: { fixedrange: true, gridcolor: "#EEEDE8" },
+    // Zoomed to the data so a 1% move is visible; the hint gives the absolute change.
+    yaxis: { fixedrange: true, gridcolor: "#EEEDE8", tickformat: ",", rangemode: "normal" },
+  }, CONFIG);
+}
+
+function flow() {
+  const rows = inFocus(DATA.daily), x = DAYS.map(shortDay);
+  Plotly.react("flow", [
+    { type: "bar", name: "Opened", x, y: byDay(rows, "new_n"), marker: { color: "#1BAF7A" }, hovertemplate: "<b>%{x}</b><br>Opened: %{y}<extra></extra>" },
+    { type: "bar", name: "Closed", x, y: byDay(rows, "closed").map((v, i) => i === 0 ? null : v), marker: { color: "#EB6834" }, hovertemplate: "<b>%{x}</b><br>Closed: %{y}<extra></extra>" },
+  ], { ...BASE, barmode: "group", bargap: 0.3, bargroupgap: 0.08, height: 280, margin: { l: 40, r: 10, t: 10, b: 60 },
+    xaxis: { fixedrange: true }, yaxis: { fixedrange: true, gridcolor: "#EEEDE8" }, legend: { orientation: "h", y: -0.2 } }, CONFIG);
+}
+
+function movers() {
+  const rows = inLens(DATA.daily), first = DAYS[0], last = DAYS[DAYS.length - 1];
+  const at = (c, d) => rows.find(r => r.company_name === c && r.day === d)?.open;
+  const ch = [...new Set(rows.map(r => r.company_name))]
+    .map(c => ({ c, a: at(c, first), b: at(c, last) })).filter(m => m.a != null && m.b != null)
+    .map(m => ({ ...m, d: m.b - m.a })).filter(m => m.d !== 0)
+    .sort((p, q) => Math.abs(q.d) - Math.abs(p.d)).slice(0, 12).sort((p, q) => p.d - q.d);
+  document.getElementById("movers-hint").textContent =
+    `Change in open postings, ${shortDay(first)} → ${shortDay(last)}. Biggest movers, up to 12. Click a bar to focus that company.`;
+  const sel = m => !state.company || m.c === state.company ? 1 : 0.25;
+  Plotly.react("movers", [{
+    type: "bar", orientation: "h", y: ch.map(m => m.c), x: ch.map(m => m.d), text: ch.map(m => (m.d > 0 ? "+" : "") + m.d), textposition: "outside", cliponaxis: false,
+    customdata: ch.map(m => [m.a, m.b]), marker: { color: ch.map(m => m.d > 0 ? "#1BAF7A" : "#EB6834"), opacity: ch.map(sel) },
+    hovertemplate: "<b>%{y}</b><br>%{customdata[0]} → %{customdata[1]} open (%{text})<extra></extra>",
+  }], { ...BASE, height: Math.max(180, 26 * ch.length + 30), margin: { l: 130, r: 40, t: 0, b: 20 },
+    xaxis: { fixedrange: true, zeroline: true, zerolinecolor: "#8A8984", gridcolor: "#EEEDE8" }, yaxis: { fixedrange: true } }, CONFIG);
+}
+
 function familiesChart() {
   const rows = inFocus(DATA.data_roles), counts = families.map(f => rows.filter(r => r.family === f).length);
   const order = families.map((f, i) => [f, counts[i]]).sort((a, b) => a[1] - b[1]);
@@ -364,8 +430,9 @@ document.getElementById("lenses").addEventListener("click", e => {
   render();
 });
 
-function render() { kpis(); insights(); heatmap(); workplace(); bubble(); familiesChart(); roles(); health(); }
+function render() { kpis(); insights(); trend(); flow(); movers(); heatmap(); workplace(); bubble(); familiesChart(); roles(); health(); }
 render();
+document.getElementById("movers").on("plotly_click", ev => focus(ev.points[0].y));
 ["heatmap", "workplace"].forEach(id => document.getElementById(id).on("plotly_click", ev => focus(ev.points[0].y)));
 document.getElementById("bubble").on("plotly_click", ev => focus(ev.points[0].text));
 document.getElementById("families").on("plotly_click", ev => { const f = ev.points[0].y; state.family = state.family === f ? null : f; familiesChart(); roles(); });
