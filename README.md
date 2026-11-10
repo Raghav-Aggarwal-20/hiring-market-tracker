@@ -8,13 +8,22 @@ I built it to practice the recruiting-analytics stack (GCP, BigQuery, dbt, ATS d
 
 ![Dashboard](docs/img/dashboard.png)
 
-## What it shows (snapshot of 2026-11-04)
+## What it shows (snapshot of 2026-11-10)
 
-- 5,413 open postings across 30 companies; 119 of them are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
-- Day two of tracking: 107 postings opened and 103 closed. Day one has no comparison and is treated as a baseline.
-- Median posting age is 48 days. Sigma Computing's median is 147 days.
-- Of the 3,419 postings that state a workplace, 39% are remote. 37% of postings don't state one at all; Elastic and Okta never do.
-- Elastic: 424 open postings, 56% engineering, 26% sales, 3 data roles.
+- 5,488 open postings across 30 companies; 112 of them are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
+- Median posting age is 48 days. Sigma Computing's median is 153 days.
+- Of the 3,505 postings that state a workplace, 40% are remote. 36% of postings don't state one at all; Elastic and Okta never do.
+- Elastic: 430 open postings, 53% engineering, 26% sales, 3 data roles.
+
+## Week one (2026-11-03 to 2026-11-10)
+
+Eight daily snapshots, all 30 companies extracted successfully on every day.
+
+- 6,007 distinct postings seen. 598 opened after the first day and 519 closed, so open postings rose from 5,409 to 5,488 (+1.5%).
+- Hiring is a weekday activity. The Wednesday snapshot found 129 new postings; the Sunday snapshot found 2.
+- Closed postings were not fresh ones. The median closed posting had been listed for 55 days, and 29% had been up for more than 90. Only 23 postings both opened and closed inside the week.
+- Elastic grew faster than its peers: 413 to 430 (+4.1%), with 47 opened and 30 closed. The data and AI peer group grew 1.0% and the HR tech group was flat at 381.
+- Biggest movers: Grafana Labs +21, Coinbase +18, Elastic +17, GitLab +14. Okta fell by 15 (36 opened, 51 closed).
 
 ## Architecture
 
@@ -79,7 +88,7 @@ I tested these by breaking them on purpose. In throwaway datasets I broke one bo
 - **Reposted roles.** A posting that is taken down and republished under a new ID counts as a close plus a new open.
 - **Reopened postings.** If the same ID disappears and comes back, it is treated as one continuous posting; `days_seen` shows the gap.
 - **Inactive companies.** Setting `is_active = false` in the seed removes a company from current reporting without closing its postings.
-- **Short history.** Trends and time-to-close need weeks of snapshots. Until then, posting age comes from the ATS publish date, which resets if a company reposts.
+- **Short history.** One week shows the daily rhythm but not a trend, and time-to-close is only measurable for postings opened after 2026-11-03. Until more weeks pass, posting age comes from the ATS publish date, which resets if a company reposts.
 
 ## Run it yourself
 
@@ -101,6 +110,6 @@ Settings come from environment variables with defaults: `GCP_PROJECT_ID` (hiring
 extract/            API clients, BigQuery loader, run log
 dbt/                models, seeds, macros, singular tests
 dashboard/          build.py + template.html (static Plotly page)
-docs/               metric definitions, Harvest extension, learning log
+docs/               metric definitions, Harvest extension
 .github/workflows/  daily.yml
 ```
