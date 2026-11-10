@@ -24,3 +24,6 @@ logs/
 
 # Generated dashboard (built in CI)
 dashboard/site/
+
+# Personal notes (kept local)
+docs/learning_log.md
