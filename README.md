@@ -1,29 +1,29 @@
 # Hiring Market Tracker
 
-A daily ELT pipeline that pulls every open job posting from 30 companies' public Greenhouse and Ashby job boards, loads the raw JSON into BigQuery, models it with dbt, tests it, and publishes a dashboard. GitHub Actions runs it every morning at 11:00 UTC.
+A hiring benchmark for talent acquisition and workforce planning teams. It answers three questions about a set of competing companies: where they are hiring, which functions are growing, and how long their roles stay open.
 
-I built it to practice the recruiting-analytics stack (GCP, BigQuery, dbt, ATS data) on real data I could collect myself.
+Companies publish every open role on public ATS job boards, but a board only shows what is open today. This project takes a full snapshot of 30 companies' Greenhouse and Ashby boards every day, loads the raw JSON into BigQuery, and uses dbt to track each posting from the day it appears to the day it closes. GitHub Actions runs it daily and republishes the dashboard, where any company can be compared with its industry group.
 
 **Dashboard:** https://raghav-aggarwal-20.github.io/hiring-market-tracker/ (rebuilt after each daily run)
 
 ![Dashboard](docs/img/dashboard.png)
 
-## What it shows (snapshot of 2026-11-10)
+## What it shows (snapshot of 2026-11-12)
 
-- 5,488 open postings across 30 companies; 112 of them are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
-- Median posting age is 48 days. Sigma Computing's median is 153 days.
-- Of the 3,505 postings that state a workplace, 40% are remote. 36% of postings don't state one at all; Elastic and Okta never do.
-- Elastic: 430 open postings, 53% engineering, 26% sales, 3 data roles.
+- 5,499 open postings across 30 companies in four industry groups: data and AI, dev tools and observability, HR tech and analytics, fintech and consumer. 115 are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
+- Median posting age is 45 days. Sigma Computing's median is 155 days.
+- Of the 3,566 postings that state a workplace, 40% are remote. 35% of postings don't state one at all; Elastic and Okta never do.
 
-## Week one (2026-11-03 to 2026-11-10)
+## First 10 days (2026-11-03 to 2026-11-12)
 
-Eight daily snapshots, all 30 companies extracted successfully on every day.
+Ten daily snapshots, all 30 companies extracted successfully on every day.
 
-- 6,007 distinct postings seen. 598 opened after the first day and 519 closed, so open postings rose from 5,409 to 5,488 (+1.5%).
-- Hiring is a weekday activity. The Wednesday snapshot found 129 new postings; the Sunday snapshot found 2.
-- Closed postings were not fresh ones. The median closed posting had been listed for 55 days, and 29% had been up for more than 90. Only 23 postings both opened and closed inside the week.
-- Elastic grew faster than its peers: 413 to 430 (+4.1%), with 47 opened and 30 closed. The data and AI peer group grew 1.0% and the HR tech group was flat at 381.
-- Biggest movers: Grafana Labs +21, Coinbase +18, Elastic +17, GitLab +14. Okta fell by 15 (36 opened, 51 closed).
+- 6,257 distinct postings seen. 848 opened after the first day and 758 closed, so open postings rose from 5,409 to 5,499 (+1.7%).
+- Postings go up on weekdays. The two Wednesday snapshots found 129 and 145 new postings; the Sunday snapshot found 2.
+- Roles that closed had been open a long time. The median closed posting had been listed for 57 days, and 29% for more than 90. Only 43 postings opened and closed inside the 10 days.
+- Steady totals hide a lot of churn. Dev tools and observability opened 335 postings and closed 333, ending flat (2,120 to 2,122). Fintech and consumer grew 3.9% and data and AI 2.6%.
+- Sales grew the most of any function (1,644 to 1,684, +40). Engineering slipped from 1,855 to 1,842.
+- Fastest growing: Grafana Labs (123 to 155) and Fivetran (161 to 189). Okta shrank the most (392 to 367, with 73 closed against 48 opened), followed by Datadog (398 to 383).
 
 ## Architecture
 
@@ -88,7 +88,7 @@ I tested these by breaking them on purpose. In throwaway datasets I broke one bo
 - **Reposted roles.** A posting that is taken down and republished under a new ID counts as a close plus a new open.
 - **Reopened postings.** If the same ID disappears and comes back, it is treated as one continuous posting; `days_seen` shows the gap.
 - **Inactive companies.** Setting `is_active = false` in the seed removes a company from current reporting without closing its postings.
-- **Short history.** One week shows the daily rhythm but not a trend, and time-to-close is only measurable for postings opened after 2026-11-03. Until more weeks pass, posting age comes from the ATS publish date, which resets if a company reposts.
+- **Short history.** Ten days show the weekly rhythm but not a trend, and time-to-close is only measurable for postings opened after 2026-11-03. Until more weeks pass, posting age comes from the ATS publish date, which resets if a company reposts.
 
 ## Run it yourself
 

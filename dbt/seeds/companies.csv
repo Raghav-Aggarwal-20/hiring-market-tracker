@@ -1,5 +1,5 @@
 company_slug,company_name,ats,board_token,peer_group,is_active
-elastic,Elastic,greenhouse,elastic,target,true
+elastic,Elastic,greenhouse,elastic,observability,true
 datadog,Datadog,greenhouse,datadog,observability,true
 mongodb,MongoDB,greenhouse,mongodb,data_infra,true
 grafanalabs,Grafana Labs,greenhouse,grafanalabs,observability,true

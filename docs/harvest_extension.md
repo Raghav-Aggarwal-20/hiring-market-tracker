@@ -6,13 +6,11 @@ This project reads Greenhouse's public **Job Board API**, which only exposes ope
 
 Every Greenhouse posting in `raw.job_postings` carries two IDs besides the post ID:
 
-| Job Board field | Harvest equivalent | Coverage today (Elastic, 2026-11-04) |
+| Job Board field | Harvest equivalent | Coverage (all 19 Greenhouse boards, 2026-11-12) |
 |---|---|---|
-| `id` | `job_posts.id` | 424 / 424 |
-| `internal_job_id` | `jobs.id` (the requisition record that applications attach to) | 424 / 424 |
-| `requisition_id` | `jobs.requisition_id` (the company's own req number, often shared with the HRIS) | 424 / 424 |
-
-Across all 19 Greenhouse boards on the same day, `internal_job_id` is present on 4,123 of 4,133 postings (99.8%) and `requisition_id` on 3,850 (93%).
+| `id` | `job_posts.id` | 4,183 / 4,183 |
+| `internal_job_id` | `jobs.id` (the requisition record that applications attach to) | 4,172 / 4,183 (99.7%) |
+| `requisition_id` | `jobs.requisition_id` (the company's own req number, often shared with the HRIS) | 3,886 / 4,183 (93%) |
 
 So the public posting history built here could be joined to internal applications without fuzzy matching: `job_board.internal_job_id = harvest.jobs.id`. `stg_greenhouse__postings` keeps both IDs.
 

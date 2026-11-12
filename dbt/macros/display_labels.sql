@@ -18,7 +18,7 @@
             'business_analyst': 'Business analyst', 'analytics_general': 'Analytics (general)'
         },
         'peer_group': {
-            'target': 'Elastic', 'hr_tech': 'HR tech', 'hr_analytics': 'HR analytics', 'analytics': 'Analytics and BI',
+            'hr_tech': 'HR tech', 'hr_analytics': 'HR analytics', 'analytics': 'Analytics and BI',
             'data_infra': 'Data infrastructure', 'observability': 'Observability', 'ai': 'AI', 'consumer': 'Consumer',
             'dev_tools': 'Developer tools', 'security': 'Security', 'fintech': 'Fintech', 'productivity': 'Productivity'
         }
@@ -33,11 +33,11 @@
 
 
 {% macro peer_lens(peer_group) %}
-    -- Four filter groups for the dashboard: the target, HR companies, data/AI companies, everyone else.
+    -- Four industry groups for the dashboard filter, so any company is benchmarked against its neighbours.
     case
-        when {{ peer_group }} = 'target' then 'Elastic'
-        when {{ peer_group }} in ('hr_tech', 'hr_analytics') then 'HR tech and analytics'
         when {{ peer_group }} in ('analytics', 'data_infra', 'ai') then 'Data and AI'
-        else 'Other peers'
+        when {{ peer_group }} in ('observability', 'dev_tools', 'security') then 'Dev tools and observability'
+        when {{ peer_group }} in ('hr_tech', 'hr_analytics') then 'HR tech and analytics'
+        else 'Fintech and consumer'
     end
 {% endmacro %}
