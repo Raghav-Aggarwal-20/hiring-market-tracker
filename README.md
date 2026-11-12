@@ -83,8 +83,8 @@ I tested these by breaking them on purpose. In throwaway datasets I broke one bo
 
 ## Limitations
 
-- **Job-board API, not Harvest.** These public APIs cover postings only. Applications, candidates, stages, and offers need Greenhouse's authenticated Harvest API. [`docs/harvest_extension.md`](docs/harvest_extension.md) sketches how the model would extend.
-- **No Workday.** Most large enterprises post through Workday, which has no comparable public API, so the company list leans toward tech.
+- **Job-board API, not Harvest.** These public APIs cover postings only. Applications, candidates, stages, and offers need Greenhouse's authenticated Harvest API, which takes a company's own API key. [`docs/harvest_extension.md`](docs/harvest_extension.md) shows how the model would join to it through `internal_job_id`. In progress: a recruiting funnel built on a synthetic dataset that follows Harvest's schema, joined to the real postings.
+- **No Workday yet.** Most large enterprises post through Workday, so the company list leans toward tech. Workday career sites expose a public search endpoint with requisition IDs and posting dates; adding it as a third source is in progress.
 - **Reposted roles.** A posting that is taken down and republished under a new ID counts as a close plus a new open.
 - **Reopened postings.** If the same ID disappears and comes back, it is treated as one continuous posting; `days_seen` shows the gap.
 - **Inactive companies.** Setting `is_active = false` in the seed removes a company from current reporting without closing its postings.
