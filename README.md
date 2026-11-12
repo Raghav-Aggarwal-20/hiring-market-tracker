@@ -10,20 +10,20 @@ Companies publish every open role on public ATS job boards, but a board only sho
 
 ## What it shows (snapshot of 2026-11-12)
 
-- 5,499 open postings across 30 companies in four industry groups: data and AI, dev tools and observability, HR tech and analytics, fintech and consumer. 115 are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
-- Median posting age is 45 days. Sigma Computing's median is 155 days.
-- Of the 3,566 postings that state a workplace, 40% are remote. 35% of postings don't state one at all; Elastic and Okta never do.
+- 5,509 open postings across 30 companies in four industry groups: data and AI, dev tools and observability, HR tech and analytics, fintech and consumer. 114 are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
+- Median posting age is 48 days. Sigma Computing's median is 155 days.
+- Of the 3,577 postings that state a workplace, 40% are remote. 35% of postings don't state one at all; Elastic and Okta never do.
 
 ## First 10 days (2026-11-03 to 2026-11-12)
 
 Ten daily snapshots, all 30 companies extracted successfully on every day.
 
-- 6,257 distinct postings seen. 848 opened after the first day and 758 closed, so open postings rose from 5,409 to 5,499 (+1.7%).
+- 6,282 distinct postings seen. 873 opened after the first day and 773 closed, so open postings rose from 5,409 to 5,509 (+1.8%).
 - Postings go up on weekdays. The two Wednesday snapshots found 129 and 145 new postings; the Sunday snapshot found 2.
-- Roles that closed had been open a long time. The median closed posting had been listed for 57 days, and 29% for more than 90. Only 43 postings opened and closed inside the 10 days.
-- Steady totals hide a lot of churn. Dev tools and observability opened 335 postings and closed 333, ending flat (2,120 to 2,122). Fintech and consumer grew 3.9% and data and AI 2.6%.
-- Sales grew the most of any function (1,644 to 1,684, +40). Engineering slipped from 1,855 to 1,842.
-- Fastest growing: Grafana Labs (123 to 155) and Fivetran (161 to 189). Okta shrank the most (392 to 367, with 73 closed against 48 opened), followed by Datadog (398 to 383).
+- Roles that closed had been open a long time. The median closed posting had been listed for 57 days, and 30% for more than 90. Only 45 postings opened and closed inside the 10 days.
+- Steady totals hide a lot of churn. Dev tools and observability opened 340 postings and closed 331, ending almost flat (2,120 to 2,129). Fintech and consumer grew 4.1% and data and AI 2.9%.
+- Sales grew the most of any function (1,644 to 1,689, +45). Engineering slipped from 1,855 to 1,848.
+- Fastest growing: Grafana Labs (123 to 158) and Fivetran (161 to 191). Okta shrank the most (392 to 369, with 71 closed against 48 opened), followed by Datadog (398 to 382).
 
 ## Architecture
 
