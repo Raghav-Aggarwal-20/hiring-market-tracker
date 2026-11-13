@@ -87,8 +87,8 @@ def fetch_workday(board_token, known_ids=frozenset()):
         if not page.get("jobPostings"):
             break
         for job in page["jobPostings"]:
-            # Some boards list stubs with only a req ID and no page (CrowdStrike, 2026-11-13); nothing to track.
-            if "externalPath" in job:
+            # Boards sometimes list stubs with only a req ID, no title or no page (2026-11-13); nothing to track.
+            if job.get("externalPath") and job.get("title"):
                 jobs[job["externalPath"]] = {"id": job["externalPath"], **job}
         offset += WORKDAY_PAGE
     # A short listing would look like closures downstream, so fail the board instead.

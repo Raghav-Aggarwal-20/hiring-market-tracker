@@ -31,7 +31,8 @@ class FakeResponse:
 
 class FetchWorkdayTest(unittest.TestCase):
     def setUp(self):
-        self.listing = [{"externalPath": f"/job/{i}", "title": f"Role {i}"} for i in range(25)]
+        self.listing = [{"externalPath": f"/job/{i}", "title": f"Role {i}"} for i in range(24)]
+        self.listing.insert(5, {"externalPath": "/job/stub", "bulletFields": ["R1"]})  # no title: skipped
 
     def post(self, url, json, timeout):
         page = self.listing[json["offset"]:json["offset"] + json["limit"]]
@@ -48,10 +49,11 @@ class FetchWorkdayTest(unittest.TestCase):
     def test_pages_and_fetches_detail_only_for_new_postings(self):
         self.total = 25
         jobs = {j["id"]: j for j in self.fetch(frozenset({"/job/0"}))}
-        self.assertEqual(len(jobs), 25)
+        self.assertEqual(len(jobs), 24)
+        self.assertNotIn("/job/stub", jobs)
         self.assertNotIn("startDate", jobs["/job/0"])
-        self.assertEqual(jobs["/job/24"]["startDate"], "2026-11-13")
-        self.assertNotIn("jobDescription", jobs["/job/24"])
+        self.assertEqual(jobs["/job/23"]["startDate"], "2026-11-13")
+        self.assertNotIn("jobDescription", jobs["/job/23"])
 
     def test_short_listing_fails_the_board(self):
         self.total = 40
