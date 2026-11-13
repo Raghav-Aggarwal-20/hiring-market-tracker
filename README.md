@@ -40,10 +40,10 @@ Ten daily snapshots, all 30 companies extracted successfully on every day.
 
 ## Workday companies (added 2026-11-13)
 
-Workday, CrowdStrike, PayPal and Mastercard post through Workday career sites. Their first snapshot added 1,928 open postings.
+Workday, CrowdStrike, PayPal and Mastercard post through Workday career sites. Their first snapshot added 1,925 open postings.
 
 - Mastercard has the largest board of all 34 companies (858 postings) and the most data and analytics roles (60, against 18 at the next company).
-- Their median posting age is 16 to 24 days, against 48 for the original 30. Workday's `startDate` can reset when a role is reposted, so read it as days since last posted.
+- Their median posting age is 16 to 25 days, against 48 for the original 30. Workday's `startDate` can reset when a role is reposted, so read it as days since last posted.
 - PayPal and Mastercard never state remote, hybrid or onsite; Workday does on every posting.
 - They are left out of the day-by-day trend until they have their own history, so their arrival doesn't read as hiring growth.
 
