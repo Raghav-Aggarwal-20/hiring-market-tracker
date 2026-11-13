@@ -8,6 +8,19 @@ Companies publish every open role on public ATS job boards, but a board only sho
 
 ![Dashboard](docs/img/dashboard.png)
 
+## Skills used
+
+| Area | What this project uses |
+|---|---|
+| SQL | BigQuery Standard SQL: CTEs, window functions, JSON parsing, partition pruning |
+| Data modeling | dbt Core: staging, intermediate and mart layers; fact and dimension tables; seeds; Jinja macros |
+| Data quality | 67 dbt tests (generic, custom, unit), source freshness, extraction-completeness and anomaly checks |
+| Cloud (GCP) | BigQuery (partitioning, clustering, load jobs), IAM service account with least-privilege roles, query cost caps |
+| Python | REST API extraction with retries and run logging, BigQuery client, pytest |
+| Orchestration and CI/CD | GitHub Actions daily cron, secrets, GitHub Pages deploy |
+| BI and visualization | Looker Studio (Google Data Studio), Plotly dashboard built from tested report tables |
+| Recruiting data | Greenhouse and Ashby ATS APIs, requisition IDs, posting lifecycle, mapping to the Harvest data model |
+
 ## What it shows (snapshot of 2026-11-12)
 
 - 5,509 open postings across 30 companies in four industry groups: data and AI, dev tools and observability, HR tech and analytics, fintech and consumer. 114 are data and analytics roles (analyst, analytics engineer, data scientist, data engineer, BI).
@@ -24,6 +37,16 @@ Ten daily snapshots, all 30 companies extracted successfully on every day.
 - Steady totals hide a lot of churn. Dev tools and observability opened 340 postings and closed 331, ending almost flat (2,120 to 2,129). Fintech and consumer grew 4.1% and data and AI 2.9%.
 - Sales grew the most of any function (1,644 to 1,689, +45). Engineering slipped from 1,855 to 1,848.
 - Fastest growing: Grafana Labs (123 to 158) and Fivetran (161 to 191). Okta shrank the most (392 to 369, with 71 closed against 48 opened), followed by Datadog (398 to 382).
+
+## Notes from building it
+
+- **A posting coming down is not a hire.** "Closed" means it disappeared from the board. It could have been filled, paused or cancelled, and nothing here measures hires.
+- **A failed load must never look like closures.** A posting closes only on a later day when its company's extract succeeded. Otherwise one bad API call would look like a hiring freeze.
+- **Day one is a baseline.** Every posting is "new" in the first snapshot, so new-posting counts start on day two.
+- **Missing data is a finding.** 35% of postings don't say whether they are remote, hybrid or onsite; Elastic and Okta never do. Remote share is calculated only on postings that state it, and the gap is reported as its own metric.
+- **The source systems contradict themselves.** Ashby's `isRemote` and `workplaceType` can disagree (Notion lists roles as remote and hybrid at once), so `workplaceType` wins. Ashby also returns unlisted postings (41 on 2026-11-09), which are excluded.
+- **Departments don't line up across companies.** Function comes from a classification seed on department and title, tested against hand-labeled cases.
+- **Same-day numbers drift.** The scheduled run starts hours late, and each run overwrites that day's data, so a re-run changes the day's counts. README numbers always name their snapshot date.
 
 ## Architecture
 
