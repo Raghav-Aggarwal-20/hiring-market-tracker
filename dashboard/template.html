@@ -111,7 +111,7 @@
       <div>
         <div class="eyebrow">Hiring Market Tracker</div>
         <h1 id="headline">Who's hiring, for what, and how fast</h1>
-        <div class="sub">Benchmark any company's hiring against its peers. Every open posting at 30 tech, data &amp; HR-tech companies, pulled daily from their public job boards. Click any company, bar or bubble to focus the page on it.</div>
+        <div class="sub">Benchmark any company's hiring against its peers. Every open posting at 34 tech, data, HR-tech &amp; fintech companies, pulled daily from their Greenhouse, Ashby and Workday career sites. Click any company, bar or bubble to focus the page on it.</div>
       </div>
       <span class="pill"><span class="pulse"></span><span id="asof"></span></span>
     </div>
@@ -321,10 +321,15 @@ const axisDay = d => shortDay(d).replace(", ", "<br>");
 function byDay(rows, k) { return DAYS.map(d => { const v = rows.filter(r => r.day === d && r[k] != null); return v.length ? v.reduce((t, r) => t + r[k], 0) : null; }); }
 
 function trend() {
-  const rows = inFocus(DATA.daily), open = byDay(rows, "open");
+  const all = inFocus(DATA.daily), start = all.reduce((m, r) => r.day < m ? r.day : m, DAYS[DAYS.length - 1]);
+  // Companies added after the first day are left out, so their arrival doesn't read as hiring growth.
+  const keep = new Set(all.filter(r => r.day === start).map(r => r.company_name));
+  const rows = all.filter(r => keep.has(r.company_name)), open = byDay(rows, "open");
+  const later = new Set(all.map(r => r.company_name)).size - keep.size;
   const first = open.find(v => v != null), last = open[open.length - 1], d = last - first;
   document.getElementById("trend-hint").textContent =
-    `${DAYS.length} daily snapshots. ${fmt(first)} → ${fmt(last)} open (${d >= 0 ? "+" : ""}${fmt(d)}).`;
+    `${DAYS.length} daily snapshots. ${fmt(first)} → ${fmt(last)} open (${d >= 0 ? "+" : ""}${fmt(d)}).` +
+    (later ? ` ${later} compan${later === 1 ? "y" : "ies"} added later ${later === 1 ? "is" : "are"} not in this line.` : "");
   Plotly.react("trend", [{
     type: "scatter", mode: "lines+markers", x: DAYS.map(axisDay), y: open, line: { color: "#2A78D6", width: 2 },
     marker: { size: 8, color: "#2A78D6", line: { color: "#fff", width: 2 } },

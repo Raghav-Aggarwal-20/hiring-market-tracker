@@ -2,7 +2,7 @@
 
 A hiring benchmark for talent acquisition and workforce planning teams. It answers three questions about a set of competing companies: where they are hiring, which functions are growing, and how long their roles stay open.
 
-Companies publish every open role on public ATS job boards, but a board only shows what is open today. This project takes a full snapshot of 30 companies' Greenhouse and Ashby boards every day, loads the raw JSON into BigQuery, and uses dbt to track each posting from the day it appears to the day it closes. GitHub Actions runs it daily and republishes the dashboard, where any company can be compared with its industry group.
+Companies publish every open role on public ATS job boards, but a board only shows what is open today. This project takes a full snapshot of 34 companies' Greenhouse, Ashby and Workday career sites every day, loads the raw JSON into BigQuery, and uses dbt to track each posting from the day it appears to the day it closes. GitHub Actions runs it daily and republishes the dashboard, where any company can be compared with its industry group.
 
 **Dashboard:** https://raghav-aggarwal-20.github.io/hiring-market-tracker/ (rebuilt after each daily run)
 
@@ -19,7 +19,7 @@ Companies publish every open role on public ATS job boards, but a board only sho
 | Python | REST API extraction with retries and run logging, BigQuery client, pytest |
 | Orchestration and CI/CD | GitHub Actions daily cron, secrets, GitHub Pages deploy |
 | BI and visualization | Looker Studio (Google Data Studio), Plotly dashboard built from tested report tables |
-| Recruiting data | Greenhouse and Ashby ATS APIs, requisition IDs, posting lifecycle, mapping to the Harvest data model |
+| Recruiting data | Greenhouse, Ashby and Workday career-site APIs, requisition IDs, posting lifecycle, mapping to the Harvest data model |
 
 ## What it shows (snapshot of 2026-11-12)
 
@@ -38,6 +38,15 @@ Ten daily snapshots, all 30 companies extracted successfully on every day.
 - Sales grew the most of any function (1,644 to 1,689, +45). Engineering slipped from 1,855 to 1,848.
 - Fastest growing: Grafana Labs (123 to 158) and Fivetran (161 to 191). Okta shrank the most (392 to 369, with 71 closed against 48 opened), followed by Datadog (398 to 382).
 
+## Workday companies (added 2026-11-13)
+
+Workday, CrowdStrike, PayPal and Mastercard post through Workday career sites. Their first snapshot added 1,928 open postings.
+
+- Mastercard has the largest board of all 34 companies (858 postings) and the most data and analytics roles (60, against 18 at the next company).
+- Their median posting age is 16 to 24 days, against 48 for the original 30. Workday's `startDate` can reset when a role is reposted, so read it as days since last posted.
+- PayPal and Mastercard never state remote, hybrid or onsite; Workday does on every posting.
+- They are left out of the day-by-day trend until they have their own history, so their arrival doesn't read as hiring growth.
+
 ## Notes from building it
 
 - **A posting coming down is not a hire.** "Closed" means it disappeared from the board. It could have been filled, paused or cancelled, and nothing here measures hires.
@@ -46,17 +55,18 @@ Ten daily snapshots, all 30 companies extracted successfully on every day.
 - **Missing data is a finding.** 35% of postings don't say whether they are remote, hybrid or onsite; Elastic and Okta never do. Remote share is calculated only on postings that state it, and the gap is reported as its own metric.
 - **The source systems contradict themselves.** Ashby's `isRemote` and `workplaceType` can disagree (Notion lists roles as remote and hybrid at once), so `workplaceType` wins. Ashby also returns unlisted postings (41 on 2026-11-09), which are excluded.
 - **Departments don't line up across companies.** Function comes from a classification seed on department and title, tested against hand-labeled cases.
+- **Workday hides the useful fields.** Its search list has titles and location text only. Posting date, requisition ID, country and remote type come from a per-posting detail call, so the extractor makes that call once, on a posting's first sighting, and dbt carries the fields forward. Only the first search page reports the real total (later pages say 0), and a listing that comes back short fails the company for the day rather than closing postings that were just missed.
 - **Same-day numbers drift.** The scheduled run starts hours late, and each run overwrites that day's data, so a re-run changes the day's counts. README numbers always name their snapshot date.
 
 ## Architecture
 
 ```
 Greenhouse Job Board API ─┐
-                          ├─ extract/ (Python) ── raw.job_postings      (JSON payload, partitioned by snapshot_date)
-Ashby Posting API ────────┘                    └─ raw.extract_runs      (one row per company per run: status, count, error)
+Ashby Posting API ────────┼─ extract/ (Python) ── raw.job_postings      (JSON payload, partitioned by snapshot_date)
+Workday career sites ─────┘                    └─ raw.extract_runs      (one row per company per run: status, count, error)
                                                           │
                                                    dbt (analytics dataset)
-          staging (views)        stg_greenhouse__postings, stg_ashby__postings, stg_extract_runs
+          staging (views)        stg_greenhouse__postings, stg_ashby__postings, stg_workday__postings, stg_extract_runs
           intermediate (views)   unioned, classified, posting lifecycle, company extract days
           marts (tables)         dim_company, dim_posting, fct_company_daily, fct_postings_current
           reporting (tables)     rpt_postings_current, rpt_company_summary, rpt_company_daily, rpt_pipeline_health
@@ -107,7 +117,7 @@ I tested these by breaking them on purpose. In throwaway datasets I broke one bo
 ## Limitations
 
 - **Job-board API, not Harvest.** These public APIs cover postings only. Applications, candidates, stages, and offers need Greenhouse's authenticated Harvest API, which takes a company's own API key. [`docs/harvest_extension.md`](docs/harvest_extension.md) shows how the model would join to it through `internal_job_id`. In progress: a recruiting funnel built on a synthetic dataset that follows Harvest's schema, joined to the real postings.
-- **No Workday yet.** Most large enterprises post through Workday, so the company list leans toward tech. Workday career sites expose a public search endpoint with requisition IDs and posting dates; adding it as a third source is in progress.
+- **Workday coverage is new and small.** Four Workday companies (Workday, CrowdStrike, PayPal, Mastercard) joined on 2026-11-13, so their lifecycle history starts then. The career-site endpoint is the one Workday's own job pages use, not a documented API, so it could change without notice.
 - **Reposted roles.** A posting that is taken down and republished under a new ID counts as a close plus a new open.
 - **Reopened postings.** If the same ID disappears and comes back, it is treated as one continuous posting; `days_seen` shows the gap.
 - **Inactive companies.** Setting `is_active = false` in the seed removes a company from current reporting without closing its postings.

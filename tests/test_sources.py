@@ -17,5 +17,46 @@ class FetchPostingsTest(unittest.TestCase):
                 sources.fetch_postings("ashby", "hex")
 
 
+
+class FakeResponse:
+    def __init__(self, body):
+        self.body = body
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.body
+
+
+class FetchWorkdayTest(unittest.TestCase):
+    def setUp(self):
+        self.listing = [{"externalPath": f"/job/{i}", "title": f"Role {i}"} for i in range(25)]
+
+    def post(self, url, json, timeout):
+        page = self.listing[json["offset"]:json["offset"] + json["limit"]]
+        # Like Workday: only the first page carries the real total.
+        return FakeResponse({"total": self.total if json["offset"] == 0 else 0, "jobPostings": page})
+
+    def get(self, url, timeout):
+        return FakeResponse({"jobPostingInfo": {"startDate": "2026-11-13", "jobDescription": "<p>x</p>"}})
+
+    def fetch(self, known):
+        with mock.patch.object(sources.SESSION, "post", self.post), mock.patch.object(sources.SESSION, "get", self.get):
+            return sources.fetch_workday("acme.wd1/Careers", known)
+
+    def test_pages_and_fetches_detail_only_for_new_postings(self):
+        self.total = 25
+        jobs = {j["id"]: j for j in self.fetch(frozenset({"/job/0"}))}
+        self.assertEqual(len(jobs), 25)
+        self.assertNotIn("startDate", jobs["/job/0"])
+        self.assertEqual(jobs["/job/24"]["startDate"], "2026-11-13")
+        self.assertNotIn("jobDescription", jobs["/job/24"])
+
+    def test_short_listing_fails_the_board(self):
+        self.total = 40
+        with self.assertRaises(ValueError):
+            self.fetch(frozenset())
+
 if __name__ == "__main__":
     unittest.main()

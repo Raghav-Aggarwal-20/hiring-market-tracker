@@ -29,3 +29,7 @@ pagerduty,PagerDuty,greenhouse,pagerduty,observability,true
 ramp,Ramp,ashby,ramp,fintech,true
 notion,Notion,ashby,notion,productivity,true
 plaid,Plaid,ashby,plaid,fintech,true
+workday,Workday,workday,workday.wd5/Workday,hr_tech,true
+crowdstrike,CrowdStrike,workday,crowdstrike.wd5/crowdstrikecareers,security,true
+paypal,PayPal,workday,paypal.wd1/jobs,fintech,true
+mastercard,Mastercard,workday,mastercard.wd1/CorporateCareers,fintech,true

@@ -10,7 +10,7 @@ seeds:
         data_tests:
           - accepted_values:
               arguments:
-                values: [greenhouse, ashby]
+                values: [greenhouse, ashby, workday]
       - name: board_token
         description: The name the ATS API uses for this company's board (can differ from company_slug).
         data_tests: [not_null]

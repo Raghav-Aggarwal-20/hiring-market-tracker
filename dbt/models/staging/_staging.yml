@@ -41,6 +41,35 @@ models:
       - name: salary_label
         description: The company's own text for the first pay range (e.g. "OTE range", "Hourly Rate:"). Used downstream to decide pay basis.
 
+  - name: stg_workday__postings
+    description: One row per Workday posting per snapshot day. Detail fields are fetched once per posting and carried to every day.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [posting_key, snapshot_date]
+    columns:
+      - name: posting_key
+        data_tests: [not_null]
+      - name: posting_id
+        description: The posting's externalPath on the career site.
+      - name: company_slug
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('companies')
+                field: company_slug
+      - name: title
+        data_tests: [not_null]
+      - name: published_at
+        description: Workday `startDate`. NULL until the posting's detail call succeeds (normally its first run).
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: requisition_id
+        description: Workday `jobReqId`, the requisition number shared with Workday HCM.
+
   - name: stg_ashby__postings
     description: One row per Ashby posting per snapshot day, typed and renamed from the raw JSON.
     data_tests:

@@ -30,10 +30,10 @@ classified as (
             else 'none'
         end as job_function_source,
 
-        -- Company-provided field first (Greenhouse custom metadata or Ashby workplaceType), then location text.
+        -- Company-provided field first (Greenhouse custom metadata, Ashby workplaceType, Workday remoteType), then location text.
         case
             when regexp_contains(lower(workplace_type_raw), r'remote') then 'remote'
-            when regexp_contains(lower(workplace_type_raw), r'hybrid|flexible') then 'hybrid'
+            when regexp_contains(lower(workplace_type_raw), r'hybrid|flex') then 'hybrid'
             when regexp_contains(lower(workplace_type_raw), r'on-?site|in office') then 'onsite'
             when regexp_contains(lower(location_name), r'remote|distributed') then 'remote'
             when regexp_contains(lower(location_name), r'hybrid') then 'hybrid'
@@ -43,7 +43,7 @@ classified as (
 
         -- US if any listed location is in the US. NULL when the text names no place at all ("Remote", "Hybrid").
         case
-            when country is not null then country in ('United States', 'USA')
+            when country is not null then country in ('United States', 'USA', 'United States of America')
             when regexp_contains(lower(location_name), r'united states|\busa?\b|u\.s\.|\bus-|\bnyc\b|san francisco|new york|seattle|boston|denver|austin|chicago|washington|menlo park|oakland|atlanta|nashville|los angeles|palo alto|mountain view|san jose|sunnyvale|portland|miami|dallas|houston|philadelphia|pittsburgh|raleigh|salt lake|phoenix|san diego|minneapolis|bay area')
                 -- State abbreviations are matched case-sensitively after a comma ("Austin, TX").
                 or regexp_contains(location_name, r',\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\b')

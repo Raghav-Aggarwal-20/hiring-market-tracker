@@ -18,6 +18,22 @@ from extract.sources import fetch_postings
 SEED_PATH = Path(__file__).resolve().parent.parent / "dbt" / "seeds" / "companies.csv"
 
 
+def known_workday_ids(client, dataset):
+    """Workday postings that already have detail fields loaded, by company, so they aren't fetched again."""
+    sql = f"""
+        select company_slug, array_agg(distinct posting_id) as ids
+        from `{client.project}.{dataset}.job_postings`
+        where ats = 'workday' and json_value(payload, '$.startDate') is not null
+        group by company_slug
+    """
+    try:
+        return {r.company_slug: frozenset(r.ids) for r in client.query(sql).result()}
+    except Exception as exc:
+        # Without the list every posting gets detail fetched again (slower, capped), never wrong.
+        print(f"known workday ids unavailable: {exc!r}")
+        return {}
+
+
 def main():
     project = os.environ.get("GCP_PROJECT_ID", "hiring-market-tracker")
     dataset = os.environ.get("RAW_DATASET", "raw")
@@ -28,6 +44,7 @@ def main():
     run_id = uuid.uuid4().hex
     with SEED_PATH.open() as f:
         companies = [c for c in csv.DictReader(f) if c["is_active"] == "true"]
+    known = known_workday_ids(client, dataset)
 
     posting_rows, run_rows = [], []
     for company in companies:
@@ -44,7 +61,7 @@ def main():
             "error": None,
         }
         try:
-            postings = fetch_postings(company["ats"], company["board_token"])
+            postings = fetch_postings(company["ats"], company["board_token"], known.get(company["company_slug"], frozenset()))
         except Exception as exc:
             # One broken board must not stop the other companies from loading.
             response = getattr(exc, "response", None)
