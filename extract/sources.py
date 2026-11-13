@@ -74,7 +74,7 @@ def fetch_workday(board_token, known_ids=frozenset()):
     """board_token is "<host>/<site>", e.g. "workday.wd5/Workday". known_ids: postings that already have detail."""
     host, site = board_token.split("/")
     base = f"https://{host}.myworkdayjobs.com/wday/cxs/{host.split('.')[0]}/{site}"
-    jobs, total, offset = {}, None, 0
+    jobs, total, offset, listed = {}, None, 0, 0
     while total is None or offset < total:
         response = SESSION.post(
             f"{base}/jobs", json={"appliedFacets": {}, "limit": WORKDAY_PAGE, "offset": offset, "searchText": ""},
@@ -86,14 +86,15 @@ def fetch_workday(board_token, known_ids=frozenset()):
         total = page["total"] if total is None else total
         if not page.get("jobPostings"):
             break
+        listed += len(page["jobPostings"])
         for job in page["jobPostings"]:
             # Boards sometimes list stubs with only a req ID, no title or no page (2026-11-13); nothing to track.
             if job.get("externalPath") and job.get("title"):
                 jobs[job["externalPath"]] = {"id": job["externalPath"], **job}
         offset += WORKDAY_PAGE
-    # A short listing would look like closures downstream, so fail the board instead.
-    if len(jobs) < total * 0.99:
-        raise ValueError(f"workday/{board_token}: got {len(jobs)} of {total} postings")
+    # A short listing would look like closures downstream, so fail the board instead. Stubs count as listed.
+    if listed < total * 0.99:
+        raise ValueError(f"workday/{board_token}: got {listed} of {total} postings")
 
     # The search list has no posting date or req ID; fetch those once, on a posting's first sighting.
     new = [p for p in jobs if p not in known_ids][:WORKDAY_MAX_DETAILS]
