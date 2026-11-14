@@ -17,6 +17,7 @@ select
     p.ats,
     p.company_slug,
     p.posting_id,
+    p.internal_job_id,
     p.requisition_id,
     p.title,
     p.department_name,

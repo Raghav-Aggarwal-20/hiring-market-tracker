@@ -62,3 +62,33 @@ class FetchWorkdayTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HarvestSyntheticTest(unittest.TestCase):
+    """The synthetic funnel must obey the rules a real Harvest export would."""
+
+    def test_job_invariants(self):
+        from datetime import date
+        from extract.harvest_synthetic import STAGES, simulate_job
+
+        as_of = date(2026, 11, 13)
+        hires = 0
+        for job_id in range(1000, 1200):
+            closed = date(2026, 11, 8) if job_id % 2 else None
+            job = {"job_id": job_id, "title": "x", "job_function": "engineering",
+                   "opened": date(2026, 8, 1), "closed": closed}
+            stages, apps, offers = simulate_job(job, as_of)
+            self.assertEqual(len(stages), len(STAGES))
+            hired = [a for a in apps if a["status"] == "hired"]
+            hires += len(hired)
+            self.assertLessEqual(len(hired), 1)
+            accepted = [o for o in offers if o["status"] == "accepted"]
+            self.assertEqual([o["application_id"] for o in accepted], [a["id"] for a in hired])
+            end = (closed or as_of).isoformat()
+            for a in apps:
+                self.assertLessEqual(a["applied_at"][:10], end)
+                if closed:  # nobody is left in process once the posting is down
+                    self.assertNotEqual(a["status"], "active")
+                if a["rejected_at"]:
+                    self.assertLessEqual(a["applied_at"][:10], a["rejected_at"][:10])
+        self.assertGreater(hires, 60)  # about 80% of the 100 closed jobs are filled

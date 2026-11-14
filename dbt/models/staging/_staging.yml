@@ -123,3 +123,38 @@ models:
                 values: [success, failed]
       - name: company_slug
         data_tests: [not_null]
+
+  - name: stg_harvest__applications
+    description: SYNTHETIC. One row per Harvest application (prospects excluded).
+    columns:
+      - name: application_id
+        data_tests: [unique, not_null]
+      - name: job_id
+        description: Harvest `jobs.id`, equal to the public board's `internal_job_id`.
+        data_tests: [not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [active, rejected, hired]
+
+  - name: stg_harvest__job_stages
+    description: SYNTHETIC. One row per stage of each job's interview plan.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [job_id, stage_order]
+    columns:
+      - name: stage_id
+        data_tests: [unique, not_null]
+
+  - name: stg_harvest__offers
+    description: SYNTHETIC. One row per offer.
+    columns:
+      - name: offer_id
+        data_tests: [unique, not_null]
+      - name: offer_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [accepted, rejected, unresolved, deprecated]

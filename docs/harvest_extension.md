@@ -2,6 +2,8 @@
 
 This project reads Greenhouse's public **Job Board API**, which only exposes open postings. An in-house recruiting analytics team works from the authenticated **Harvest API** (jobs, applications, candidates, stages, offers) and from the HRIS (Workday) for hires. This note covers what would change to support that, and what would stay the same.
 
+**Status (2026-11-13):** the models below are built and tested on synthetic Harvest-shaped data for Fivetran's real requisitions (`extract/harvest_synthetic.py`, `dim_requisition`, `fct_applications`, `fct_requisition_funnel`, `fct_time_to_fill`). Stage history, candidates, the Workday hire join and the governance controls are still design only.
+
 ## The join key is already here
 
 Every Greenhouse posting in `raw.job_postings` carries two IDs besides the post ID:

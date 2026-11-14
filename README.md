@@ -14,12 +14,12 @@ Companies publish every open role on public ATS job boards, but a board only sho
 |---|---|
 | SQL | BigQuery Standard SQL: CTEs, window functions, JSON parsing, partition pruning |
 | Data modeling | dbt Core: staging, intermediate and mart layers; fact and dimension tables; seeds; Jinja macros |
-| Data quality | 67 dbt tests (generic, custom, unit), source freshness, extraction-completeness and anomaly checks |
+| Data quality | 95 dbt tests (generic, custom, unit), source freshness, extraction-completeness and anomaly checks |
 | Cloud (GCP) | BigQuery (partitioning, clustering, load jobs), IAM service account with least-privilege roles, query cost caps |
 | Python | REST API extraction with retries and run logging, BigQuery client, pytest |
 | Orchestration and CI/CD | GitHub Actions daily cron, secrets, GitHub Pages deploy |
 | BI and visualization | Looker Studio (Google Data Studio), Plotly dashboard built from tested report tables |
-| Recruiting data | Greenhouse, Ashby and Workday career-site APIs, requisition IDs, posting lifecycle, mapping to the Harvest data model |
+| Recruiting data | Greenhouse, Ashby and Workday career-site APIs, requisition IDs, posting lifecycle, a Harvest-schema recruiting funnel (stage conversion, time to fill, source) |
 
 ## What it shows (snapshot of 2026-11-12)
 
@@ -47,6 +47,17 @@ Workday, CrowdStrike, PayPal and Mastercard post through Workday career sites. T
 - PayPal and Mastercard never state remote, hybrid or onsite; Workday does on every posting.
 - They are left out of the day-by-day trend until they have their own history, so their arrival doesn't read as hiring growth.
 
+## Recruiting funnel (Harvest schema, synthetic data)
+
+Applications, interview stages and offers live in Greenhouse's Harvest API, which needs the company's own API key. To build and test those models anyway, `extract/harvest_synthetic.py` generates Harvest v1 objects for Fivetran's real requisitions and loads them to `raw.harvest_*` the way a real extractor would. **The requisitions and their open and close dates are real; every application, stage move and offer is invented.** Swapping the generator for a Harvest client would leave the dbt models unchanged.
+
+- `dim_requisition`: one row per requisition, keyed on the job board's `internal_job_id`, which is Harvest's `jobs.id`.
+- `fct_applications` and `fct_requisition_funnel`: how far each application got, and the pass-through rate at each stage. Harvest stores only the current stage, and a rejected application stays on the stage where it was rejected, so the current stage doubles as the furthest stage reached.
+- `fct_time_to_fill`: real publish date to synthetic accepted offer. 17 of the 25 closed requisitions are filled in the synthetic data, with a median of 36 days.
+- Tests check that no requisition has two hires, every hire has an accepted offer, and every application joins to a real requisition.
+
+The rates behind the synthetic data are mine (for example, referrals pass the first screen at about twice the base rate), so these tables show that the models work, not anything about Fivetran's hiring.
+
 ## Notes from building it
 
 - **A posting coming down is not a hire.** "Closed" means it disappeared from the board. It could have been filled, paused or cancelled, and nothing here measures hires.
@@ -54,6 +65,7 @@ Workday, CrowdStrike, PayPal and Mastercard post through Workday career sites. T
 - **Day one is a baseline.** Every posting is "new" in the first snapshot, so new-posting counts start on day two.
 - **Missing data is a finding.** 35% of postings don't say whether they are remote, hybrid or onsite; Elastic and Okta never do. Remote share is calculated only on postings that state it, and the gap is reported as its own metric.
 - **The source systems contradict themselves.** Ashby's `isRemote` and `workplaceType` can disagree (Notion lists roles as remote and hybrid at once), so `workplaceType` wins. Ashby also returns unlisted postings (41 on 2026-11-09), which are excluded.
+- **A posting is not a requisition.** Fivetran's 227 postings since 2026-11-03 belong to 142 requisitions; 35 requisitions are posted 2 to 8 times, usually once per location. Counting postings overstates openings, so the funnel is keyed on the requisition.
 - **Departments don't line up across companies.** Function comes from a classification seed on department and title, tested against hand-labeled cases.
 - **Workday hides the useful fields.** Its search list has titles and location text only. Posting date, requisition ID, country and remote type come from a per-posting detail call, so the extractor makes that call once, on a posting's first sighting, and dbt carries the fields forward. Only the first search page reports the real total (later pages say 0), and a listing that comes back short fails the company for the day rather than closing postings that were just missed.
 - **Same-day numbers drift.** The scheduled run starts hours late, and each run overwrites that day's data, so a re-run changes the day's counts. README numbers always name their snapshot date.
@@ -64,11 +76,14 @@ Workday, CrowdStrike, PayPal and Mastercard post through Workday career sites. T
 Greenhouse Job Board API ─┐
 Ashby Posting API ────────┼─ extract/ (Python) ── raw.job_postings      (JSON payload, partitioned by snapshot_date)
 Workday career sites ─────┘                    └─ raw.extract_runs      (one row per company per run: status, count, error)
+harvest_synthetic.py (SYNTHETIC, run once) ───────── raw.harvest_applications, harvest_job_stages, harvest_offers
                                                           │
                                                    dbt (analytics dataset)
-          staging (views)        stg_greenhouse__postings, stg_ashby__postings, stg_workday__postings, stg_extract_runs
+          staging (views)        stg_greenhouse__postings, stg_ashby__postings, stg_workday__postings, stg_extract_runs,
+                                 stg_harvest__applications, stg_harvest__job_stages, stg_harvest__offers
           intermediate (views)   unioned, classified, posting lifecycle, company extract days
-          marts (tables)         dim_company, dim_posting, fct_company_daily, fct_postings_current
+          marts (tables)         dim_company, dim_posting, fct_company_daily, fct_postings_current,
+                                 dim_requisition, fct_applications, fct_requisition_funnel, fct_time_to_fill
           reporting (tables)     rpt_postings_current, rpt_company_summary, rpt_company_daily, rpt_pipeline_health
                                                           │
                               ┌───────────────────────────┴──────────────────────────┐
@@ -79,7 +94,7 @@ Workday career sites ─────┘                    └─ raw.extract_ru
 |---|---|
 | Extract and load | Python 3.12, `requests` with retries, BigQuery load jobs. Each day's partition is overwritten, so re-running a day is safe. |
 | Warehouse | BigQuery. Raw table partitioned by `snapshot_date`, clustered by `company_slug`, payload kept as `JSON`. |
-| Transform and test | dbt Core 1.12 and dbt-bigquery: 15 models, 3 seeds, 67 tests including one unit test |
+| Transform and test | dbt Core 1.12 and dbt-bigquery: 23 models, 3 seeds, 95 tests including one unit test |
 | Orchestration | GitHub Actions on a daily cron plus manual dispatch |
 | Auth | Service account `hmt-pipeline` with BigQuery Job User on the project and Data Editor on the `raw` and `analytics` datasets only |
 | Dashboards | Static Plotly page built from the `rpt_` tables, plus a Google Data Studio (formerly Looker Studio) report |
@@ -116,7 +131,7 @@ I tested these by breaking them on purpose. In throwaway datasets I broke one bo
 
 ## Limitations
 
-- **Job-board API, not Harvest.** These public APIs cover postings only. Applications, candidates, stages, and offers need Greenhouse's authenticated Harvest API, which takes a company's own API key. [`docs/harvest_extension.md`](docs/harvest_extension.md) shows how the model would join to it through `internal_job_id`. In progress: a recruiting funnel built on a synthetic dataset that follows Harvest's schema, joined to the real postings.
+- **Job-board API, not Harvest.** These public APIs cover postings only. Applications, candidates, stages, and offers need Greenhouse's authenticated Harvest API, which takes a company's own API key. The funnel models run on synthetic Harvest-shaped data for one company (see above); [`docs/harvest_extension.md`](docs/harvest_extension.md) covers what a real Harvest connection would add: auth, incremental loads and candidate-data governance. The synthetic data is generated once, so requisitions that close after 2026-11-13 show as closed without a hire.
 - **Workday coverage is new and small.** Four Workday companies (Workday, CrowdStrike, PayPal, Mastercard) joined on 2026-11-13, so their lifecycle history starts then. The career-site endpoint is the one Workday's own job pages use, not a documented API, so it could change without notice.
 - **Reposted roles.** A posting that is taken down and republished under a new ID counts as a close plus a new open.
 - **Reopened postings.** If the same ID disappears and comes back, it is treated as one continuous posting; `days_seen` shows the gap.
@@ -130,6 +145,7 @@ uv venv --python 3.12 && source .venv/bin/activate
 pip install -r requirements.txt
 gcloud auth application-default login          # or set GOOGLE_APPLICATION_CREDENTIALS
 python -m extract                              # pull today's postings into raw
+python -m extract.harvest_synthetic            # once, after a first dbt build: synthetic Harvest data
 dbt deps --project-dir dbt --profiles-dir dbt
 dbt build --project-dir dbt --profiles-dir dbt
 python -m dashboard.build                      # writes dashboard/site/index.html

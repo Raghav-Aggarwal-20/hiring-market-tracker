@@ -89,3 +89,57 @@ models:
     columns:
       - name: company_slug
         data_tests: [unique, not_null]
+
+  - name: fct_applications
+    description: >
+      SYNTHETIC funnel. One row per application, joined to its real posting through internal_job_id.
+      `furthest_stage_order` is the current stage (rejections stay on the stage they happened at), or the last
+      stage for hires.
+    data_tests:
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('stg_harvest__applications')
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not is_hired or offer_status = 'accepted'"
+    columns:
+      - name: application_id
+        data_tests: [unique, not_null]
+      - name: furthest_stage_order
+        data_tests: [not_null]
+
+  - name: fct_requisition_funnel
+    description: SYNTHETIC funnel. One row per job per interview stage, with pass-through from the previous stage.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [job_id, stage_order]
+    columns:
+      - name: pass_through_rate
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: fct_time_to_fill
+    description: >
+      One row per requisition: real public posting dates next to the SYNTHETIC hire. Time to fill counts from the
+      ATS publish date, which a repost resets.
+    columns:
+      - name: job_id
+        description: Unique, so no requisition has two hires.
+        data_tests: [unique, not_null]
+      - name: requisition_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [filled, open, closed_unfilled]
+
+  - name: dim_requisition
+    description: >
+      One row per Greenhouse requisition (`internal_job_id`, Harvest `jobs.id`). Real data. A requisition with
+      several postings is open while any of them is, and closes with the last.
+    columns:
+      - name: job_id
+        data_tests: [unique, not_null]
