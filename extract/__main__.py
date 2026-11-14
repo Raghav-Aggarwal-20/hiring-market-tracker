@@ -60,8 +60,15 @@ def main():
             "n_postings": 0,
             "error": None,
         }
+        args = (company["ats"], company["board_token"], known.get(company["company_slug"], frozenset()))
         try:
-            postings = fetch_postings(company["ats"], company["board_token"], known.get(company["company_slug"], frozenset()))
+            try:
+                postings = fetch_postings(*args)
+            except Exception as exc:
+                # Boards sometimes answer with a maintenance page for a moment (PayPal, 2026-11-14); try once more.
+                print(f"{company['company_slug']:<16} retrying after {exc!r:.120}")
+                time.sleep(30)
+                postings = fetch_postings(*args)
         except Exception as exc:
             # One broken board must not stop the other companies from loading.
             response = getattr(exc, "response", None)

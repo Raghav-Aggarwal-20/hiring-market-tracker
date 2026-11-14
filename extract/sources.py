@@ -27,7 +27,7 @@ WORKDAY_MAX_DETAILS = 1500
 
 def _session():
     session = requests.Session()
-    retry = Retry(total=3, backoff_factor=2, status_forcelist=(429, 500, 502, 503, 504), allowed_methods=("GET", "POST"))  # Workday search is a read-only POST
+    retry = Retry(total=3, backoff_factor=2, status_forcelist=(429, 500, 502, 503, 504, 520, 521, 522, 524), allowed_methods=("GET", "POST"))  # Workday search is a read-only POST
     session.mount("https://", HTTPAdapter(max_retries=retry))
     session.headers["User-Agent"] = USER_AGENT
     return session
