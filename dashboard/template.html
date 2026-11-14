@@ -76,6 +76,7 @@
   .search { flex: 1 1 220px; font: inherit; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: #FAFAF8; }
   .search:focus { outline: 2px solid var(--blue); outline-offset: 1px; background: #fff; }
   .tag { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border-radius: 999px; background: #EAF2FC; color: var(--navy-2); font-size: 12px; font-weight: 600; }
+  .tag.synth { background: #FDF0D5; color: #7A4F00; vertical-align: 2px; margin-left: 4px; }
   .tag button { border: 0; background: none; cursor: pointer; color: inherit; font-weight: 700; }
   .count { color: var(--muted); font-size: 12.5px; margin-left: auto; }
   .table-wrap { overflow: auto; max-height: 520px; border-radius: 10px; }
@@ -179,13 +180,25 @@
       <div class="table-wrap"><table id="roles"></table></div>
     </section>
 
+    <section class="card half">
+      <h2>Recruiting funnel <span class="tag synth">Synthetic data</span></h2>
+      <div class="hint" id="funnel-hint"></div>
+      <div id="funnel"></div>
+    </section>
+
+    <section class="card half">
+      <h2>Which sources reach a phone screen <span class="tag synth">Synthetic data</span></h2>
+      <div class="hint">Share of applications that got past Application Review, by source. The rates are assumptions built into the generator, not findings.</div>
+      <div id="sources"></div>
+    </section>
+
     <section class="card full">
       <h2>Pipeline health</h2>
       <div class="hint">Latest daily extract per company. A failed extract never closes postings.</div>
       <div class="chips" id="health"></div>
     </section>
   </div>
-  <footer>Source: public Greenhouse &amp; Ashby job-board APIs → BigQuery → dbt → this page. Rebuilt daily by GitHub Actions.</footer>
+  <footer>Source: public Greenhouse, Ashby &amp; Workday job boards → BigQuery → dbt → this page. Funnel panels use synthetic Harvest-shaped data on real Fivetran requisitions. Rebuilt daily by GitHub Actions.</footer>
 </div>
 
 <script>
@@ -437,8 +450,31 @@ document.getElementById("lenses").addEventListener("click", e => {
   render();
 });
 
+// SYNTHETIC Harvest funnel: one company, so it ignores the industry filter and company focus.
+function funnel() {
+  const f = DATA.funnel, s = DATA.fill[0];
+  document.getElementById("funnel-hint").textContent = `Invented applications on Fivetran's ${fmt(s.reqs)} real requisitions. ${s.filled} of ${s.closed} closed requisitions filled, median ${s.median_days} days from posting to accepted offer.`;
+  const pass = f.map((r, i) => i ? pct(r.reached / f[i - 1].reached) + " of previous" : "all applications");
+  Plotly.newPlot("funnel", [{
+    type: "bar", orientation: "h", y: f.map(r => r.stage_name), x: f.map(r => r.reached), marker: { color: "#2A78D6" },
+    text: f.map(r => fmt(r.reached)), textposition: "outside", cliponaxis: false, customdata: pass,
+    hovertemplate: "<b>%{y}</b><br>%{x:,} applications (%{customdata})<extra></extra>",
+  }], { ...BASE, height: 300, margin: { l: 170, r: 50, t: 10, b: 30 },
+    xaxis: { type: "log", dtick: 1, fixedrange: true, gridcolor: "#EEEDE8", title: { text: "Applications reaching the stage (log scale)", font: { size: 11 } } },
+    yaxis: { autorange: "reversed", fixedrange: true } }, CONFIG);
+
+  const src = DATA.sources.map(r => ({ ...r, rate: r.screened / r.apps })).sort((a, b) => b.rate - a.rate);
+  Plotly.newPlot("sources", [{
+    type: "bar", orientation: "h", y: src.map(r => r.source), x: src.map(r => r.rate), marker: { color: "#1B3A6B" },
+    text: src.map(r => pct(r.rate)), textposition: "outside", cliponaxis: false, customdata: src.map(r => [r.apps, r.hires]),
+    hovertemplate: "<b>%{y}</b><br>%{x:.0%} screened of %{customdata[0]:,} applications<br>Hires: %{customdata[1]}<extra></extra>",
+  }], { ...BASE, height: 300, margin: { l: 120, r: 40, t: 10, b: 30 },
+    xaxis: { tickformat: ".0%", fixedrange: true, gridcolor: "#EEEDE8" }, yaxis: { autorange: "reversed", fixedrange: true } }, CONFIG);
+}
+
 function render() { kpis(); insights(); trend(); flow(); movers(); heatmap(); workplace(); bubble(); familiesChart(); roles(); health(); }
 render();
+funnel();
 document.getElementById("movers").on("plotly_click", ev => focus(ev.points[0].y));
 ["heatmap", "workplace"].forEach(id => document.getElementById(id).on("plotly_click", ev => focus(ev.points[0].y)));
 document.getElementById("bubble").on("plotly_click", ev => focus(ev.points[0].text));

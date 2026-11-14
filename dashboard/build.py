@@ -49,6 +49,21 @@ QUERIES = {
         from `{ds}.rpt_pipeline_health`
         order by company_name
     """,
+    # SYNTHETIC Harvest funnel for one company (see extract/harvest_synthetic.py).
+    "funnel": """
+        select stage_order, stage_name, sum(applications_reached) as reached
+        from `{ds}.fct_requisition_funnel` group by 1, 2 order by 1
+    """,
+    "sources": """
+        select source_name as source, count(*) as apps, countif(furthest_stage_order >= 1) as screened, countif(is_hired) as hires
+        from `{ds}.fct_applications` group by 1
+    """,
+    "fill": """
+        select count(*) as reqs, countif(requisition_status = 'filled') as filled,
+               countif(requisition_status != 'open') as closed,
+               approx_quantiles(days_to_fill, 2)[offset(1)] as median_days
+        from `{ds}.fct_time_to_fill`
+    """,
 }
 
 
