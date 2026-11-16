@@ -50,6 +50,6 @@ Grain notation: **posting** means one row per open posting today (`rpt_postings_
 
 | Metric | Definition | Source | Notes |
 |---|---|---|---|
-| Status | "OK" if the company's latest extract succeeded, otherwise "Needs attention" | `rpt_pipeline_health.status_label` | Backed by the `assert_all_active_companies_extracted` test, which fails the daily build. |
+| Status | "OK" if the company's latest extract succeeded, otherwise "Needs attention" | `rpt_pipeline_health.status_label` | Backed by the `assert_all_active_companies_extracted` test, which fails the daily build after three failed days in a row. |
 | Postings extracted | Rows returned by the company's API on the latest run | `postings_extracted` | From `raw.extract_runs`, before any dbt filtering. |
 | Coverage shares | Share of a company's open postings with pay, usable pay, a stated workplace, a classified function, and a location | `share_with_pay`, `share_pay_usable`, `share_workplace_not_stated`, `share_function_other`, `share_location_not_stated` | Tracks how complete each company's postings are, not how healthy the pipeline is. |
