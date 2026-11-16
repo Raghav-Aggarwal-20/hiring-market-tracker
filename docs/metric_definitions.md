@@ -11,7 +11,7 @@ Grain notation: **posting** means one row per open posting today (`rpt_postings_
 | Open postings | Postings present in today's snapshot at active companies | `count(*)` on `rpt_postings_current` | Inactive companies (`is_active = false` in the seed) are excluded. |
 | Companies hiring | Distinct companies with at least one open posting | `count(distinct company_slug)` | |
 | New postings | Postings whose first sighting is this snapshot | `fct_company_daily.new_postings` | NULL on a company's first tracked day (everything is "new" then) and on failed extract days. |
-| Closed postings | Postings first missing on this day, where the company's extract succeeded | `fct_company_daily.closed_postings` | A failed extract never closes postings. |
+| Closed postings | Postings first missing on this day, where the company's extract succeeded | `fct_company_daily.closed_postings` | A failed extract never closes postings. On a day a company's extract failed, its closures are recorded on the next successful day, so a closure can land one day late (Workday boards, Nov 16). |
 | Net change | Open postings minus open postings on the company's previous successful day | `fct_company_daily.net_change` | NULL on the first tracked day and on failed days. |
 
 ## Role mix
