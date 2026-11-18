@@ -8,6 +8,11 @@ on:
     # different runner usually gets through; each run overwrites the day's partition, so running twice is safe.
     - cron: "0 16 * * *"
   workflow_dispatch:
+    inputs:
+      skip_extract:
+        description: "Rebuild and deploy from data already in BigQuery (e.g. after a local extract)"
+        type: boolean
+        default: false
 
 # Never let two runs write the same day's partition at once.
 concurrency:
@@ -38,6 +43,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Extract postings to raw
+        if: ${{ !inputs.skip_extract }}
         run: python -m extract
 
       - name: dbt deps
