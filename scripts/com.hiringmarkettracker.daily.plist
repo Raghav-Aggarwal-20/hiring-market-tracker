@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Install: sed "s|__REPO__|$PWD|g" scripts/com.hiringmarkettracker.daily.plist > ~/Library/LaunchAgents/com.hiringmarkettracker.daily.plist && launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.hiringmarkettracker.daily.plist -->
+<!-- Install from a clone outside ~/Documents (macOS blocks launchd there), with its own .venv: sed "s|__REPO__|$PWD|g" scripts/com.hiringmarkettracker.daily.plist > ~/Library/LaunchAgents/com.hiringmarkettracker.daily.plist && launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.hiringmarkettracker.daily.plist -->
 <plist version="1.0">
 <dict>
   <key>Label</key><string>com.hiringmarkettracker.daily</string>
