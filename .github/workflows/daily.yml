@@ -3,10 +3,10 @@ name: daily
 
 on:
   schedule:
-    - cron: "0 11 * * *"   # 11:00 UTC = 6-7am US Eastern, after most boards' overnight updates
-    # Workday boards rate-limit GitHub's shared runner IPs (429/521 on Nov 14 and 16). A second run from a
-    # different runner usually gets through; each run overwrites the day's partition, so running twice is safe.
-    - cron: "0 16 * * *"
+    # Watchdog only: rebuilds and deploys from BigQuery, no extract. Workday's boards have refused GitHub
+    # runner IPs since 2026-11-16, so the daily extract runs on a Mac (scripts/daily_local.sh), which
+    # triggers this workflow itself. If that extract stops, source freshness fails here after 48 hours.
+    - cron: "0 23 * * *"
   workflow_dispatch:
     inputs:
       skip_extract:
@@ -43,7 +43,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Extract postings to raw
-        if: ${{ !inputs.skip_extract }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !inputs.skip_extract }}
         run: python -m extract
 
       - name: dbt deps

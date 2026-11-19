@@ -2,7 +2,7 @@
 
 A hiring benchmark for talent acquisition and workforce planning teams. It answers three questions about a set of competing companies: where they are hiring, which functions are growing, and how long their roles stay open.
 
-Companies publish every open role on public ATS job boards, but a board only shows what is open today. This project takes a full snapshot of 34 companies' Greenhouse, Ashby and Workday career sites every day, loads the raw JSON into BigQuery, and uses dbt to track each posting from the day it appears to the day it closes. GitHub Actions runs it daily and republishes the dashboard, where any company can be compared with its industry group.
+Companies publish every open role on public ATS job boards, but a board only shows what is open today. This project takes a full snapshot of 34 companies' Greenhouse, Ashby and Workday career sites every day, loads the raw JSON into BigQuery, and uses dbt to track each posting from the day it appears to the day it closes. A scheduled job on my Mac pulls the boards daily and hands off to GitHub Actions, which builds, tests and republishes the dashboard, where any company can be compared with its industry group.
 
 **Dashboard:** https://raghav-aggarwal-20.github.io/hiring-market-tracker/ (rebuilt after each daily run)
 
@@ -95,7 +95,7 @@ harvest_synthetic.py (SYNTHETIC, run once) ───────── raw.harve
 | Extract and load | Python 3.12, `requests` with retries, BigQuery load jobs. Each day's partition is overwritten, so re-running a day is safe. |
 | Warehouse | BigQuery. Raw table partitioned by `snapshot_date`, clustered by `company_slug`, payload kept as `JSON`. |
 | Transform and test | dbt Core 1.12 and dbt-bigquery: 23 models, 3 seeds, 95 tests including one unit test |
-| Orchestration | GitHub Actions on a daily cron plus manual dispatch |
+| Orchestration | macOS launchd runs the extract daily and triggers GitHub Actions for dbt, tests and deploy; a nightly Actions cron rebuilds as a watchdog |
 | Auth | Service account `hmt-pipeline` with BigQuery Job User on the project and Data Editor on the `raw` and `analytics` datasets only |
 | Dashboards | Static Plotly page built from the `rpt_` tables, plus a Google Data Studio (formerly Looker Studio) report |
 | Cost guard | Every dbt and dashboard query is capped at 1 GB billed |
@@ -132,7 +132,7 @@ I tested these by breaking them on purpose. In throwaway datasets I broke one bo
 ## Limitations
 
 - **Job-board API, not Harvest.** These public APIs cover postings only. Applications, candidates, stages, and offers need Greenhouse's authenticated Harvest API, which takes a company's own API key. The funnel models run on synthetic Harvest-shaped data for one company (see above); [`docs/harvest_extension.md`](docs/harvest_extension.md) covers what a real Harvest connection would add: auth, incremental loads and candidate-data governance. The synthetic data is generated once, so requisitions that close after 2026-11-13 show as closed without a hire.
-- **Workday coverage is new and small.** Four Workday companies (Workday, CrowdStrike, PayPal, Mastercard) joined on 2026-11-13, so their lifecycle history starts then. The career-site endpoint is the one Workday's own job pages use, not a documented API, so it could change without notice.
+- **Workday coverage is new and small.** Four Workday companies (Workday, CrowdStrike, PayPal, Mastercard) joined on 2026-11-13, so their lifecycle history starts then. The career-site endpoint is the one Workday's own job pages use, not a documented API, so it could change without notice. Since 2026-11-16 these boards answer GitHub's runners with 429 (too many requests) while answering a home connection normally, which is why the extract moved off GitHub Actions. Nov 16 and 17 are missing for these four companies.
 - **Reposted roles.** A posting that is taken down and republished under a new ID counts as a close plus a new open.
 - **Reopened postings.** If the same ID disappears and comes back, it is treated as one continuous posting; `days_seen` shows the gap.
 - **Inactive companies.** Setting `is_active = false` in the seed removes a company from current reporting without closing its postings.
@@ -150,6 +150,8 @@ dbt deps --project-dir dbt --profiles-dir dbt
 dbt build --project-dir dbt --profiles-dir dbt
 python -m dashboard.build                      # writes dashboard/site/index.html
 ```
+
+To schedule it on a Mac, install the launchd job with the one-liner at the top of `scripts/com.hiringmarkettracker.daily.plist`; it runs `scripts/daily_local.sh` at 9:00 local time, or on wake if the Mac was asleep.
 
 Settings come from environment variables with defaults: `GCP_PROJECT_ID` (hiring-market-tracker), `RAW_DATASET` (raw), `DBT_DATASET` (analytics). Companies are listed in `dbt/seeds/companies.csv`.
 

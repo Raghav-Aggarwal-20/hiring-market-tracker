@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Install: sed "s|__REPO__|$PWD|g" scripts/com.hiringmarkettracker.daily.plist > ~/Library/LaunchAgents/com.hiringmarkettracker.daily.plist && launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.hiringmarkettracker.daily.plist -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.hiringmarkettracker.daily</string>
+  <key>ProgramArguments</key>
+  <array><string>__REPO__/scripts/daily_local.sh</string></array>
+  <!-- 9:00 local time; if the Mac is asleep then, it runs once on wake. -->
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>__REPO__/logs/daily_local.log</string>
+  <key>StandardErrorPath</key><string>__REPO__/logs/daily_local.log</string>
+</dict>
+</plist>
