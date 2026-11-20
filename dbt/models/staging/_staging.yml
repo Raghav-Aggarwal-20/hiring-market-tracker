@@ -67,6 +67,8 @@ models:
           - not_null:
               config:
                 severity: warn
+                # Only recent snapshots (freshness covers a stalled extract): missed detail calls fill in on the next run, but older snapshots keep their NULLs (88 on 2026-11-18).
+                where: "snapshot_date >= date_sub(current_date(), interval 1 day)"
       - name: requisition_id
         description: Workday `jobReqId`, the requisition number shared with Workday HCM.
 
