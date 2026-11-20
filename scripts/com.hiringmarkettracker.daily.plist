@@ -6,9 +6,12 @@
   <key>Label</key><string>com.hiringmarkettracker.daily</string>
   <key>ProgramArguments</key>
   <array><string>__REPO__/scripts/daily_local.sh</string></array>
-  <!-- 9:00 local time; if the Mac is asleep then, it runs once on wake. -->
+  <!-- 11:00 main run, 14:00 backup (skipped if 11:00 was complete); local time. A time missed while asleep runs once on wake. -->
   <key>StartCalendarInterval</key>
-  <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+  <array>
+    <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
   <key>StandardOutPath</key><string>__REPO__/logs/daily_local.log</string>
   <key>StandardErrorPath</key><string>__REPO__/logs/daily_local.log</string>
 </dict>

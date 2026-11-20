@@ -151,7 +151,7 @@ dbt build --project-dir dbt --profiles-dir dbt
 python -m dashboard.build                      # writes dashboard/site/index.html
 ```
 
-To schedule it on a Mac, clone the repo outside `~/Documents` (macOS blocks launchd jobs from reading it), create its `.venv`, and install the launchd job with the one-liner at the top of `scripts/com.hiringmarkettracker.daily.plist`; it runs `scripts/daily_local.sh` at 9:00 local time, or on wake if the Mac was asleep.
+To schedule it on a Mac, clone the repo outside `~/Documents` (macOS blocks launchd jobs from reading it), create its `.venv`, and install the launchd job with the one-liner at the top of `scripts/com.hiringmarkettracker.daily.plist`; it runs `scripts/daily_local.sh` at 11:00 local time with a 14:00 backup that only runs if 11:00 missed a company, and catches up on wake if the Mac was asleep.
 
 Settings come from environment variables with defaults: `GCP_PROJECT_ID` (hiring-market-tracker), `RAW_DATASET` (raw), `DBT_DATASET` (analytics). Companies are listed in `dbt/seeds/companies.csv`.
 
