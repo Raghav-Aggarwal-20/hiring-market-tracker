@@ -8,6 +8,10 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 cd "${0:A:h}/.."
 echo "=== $(date -u '+%Y-%m-%d %H:%M UTC')"
 git pull -q --ff-only
-.venv/bin/python -m extract
+# The Mac's network can drop for a minute around wake (2026-11-20: the BigQuery load lost its connection), so retry once.
+.venv/bin/python -m extract || { echo "extract failed, retrying in 5 min"; sleep 300; .venv/bin/python -m extract; } || {
+  osascript -e 'display notification "Daily extract failed twice; see ~/hmt-daily/logs/daily_local.log" with title "hiring-market-tracker"'
+  exit 1
+}
 gh workflow run daily.yml -f skip_extract=true
 echo "deploy run triggered"
